@@ -1,22 +1,30 @@
 # CHANGELOG
 
-## v0.2.0（2026-10-05）— 账号体系与参数管理端化
+## v0.2.0（2026-10-05）— 账号体系与参数管理端化、多国/多地区通用化
 
 ### 新增
 
 - 登录改为**用户名 + 密码**（bcrypt 哈希存储于 `users.password_hash`，10 轮盐）：`/api/v1/login` 只收 `{ username, password, role? }`，登录页与管理端登录页均为「用户名 + 密码」两输入框，头部显示店铺名 + 当前账号；原登录链路保留不动。
 - 初始账号：4 家合作商铺（`orchard_owner` / `jurong_owner` / `tampines_owner` / `suntec_owner`）+ 管理端 `admin_01` + 品牌方 `brand_01`，见 `docs/INIT.md`。
 - 管理端**商品管理**：新增 / 编辑 / 上架 / 下架商品，字段含 SKU、名称、分类、售价、成本价、库存、状态；后端新增 `/api/v1/admin/products` 增删改接口（需管理端权限）。
-- 管理端**财务设置**页：GST 税率、平台/商家分成比例、佣金率、佣金附加 GST 开关，写入新建 `settings` 表（key-value）；`finance.js` 改为从数据库读参数，`config.json` 仅作默认值。
+- 管理端**系统设置**页（原「财务设置」扩展为 12 项）：国家/地区、货币代码、货币符号、税种名称、税率、平台/商家分成比例、佣金率、佣金附加税率、售价是否含税开关、佣金附加税开关、财务公式说明文本，写入 `settings` 表（key-value）；`finance.js` 改为从数据库读参数，`config.json` 仅作默认值。
+- **多国/多地区通用化**：产品名去 SG（`stockverify-sg` → `stockverify`，对外统一为 **StockVerify · 多国零售核销与税务对账系统**）；`finance.js` 支持「售价含税 / 售价不含税」双口径（不含税基数 = 售价 ÷ (1+税率) / 售价）；货币代码、货币符号、税种名全部读系统设置，前端 13 处 + 管理端 33 处 `S$` 硬编码改为动态 `CUR`；登录页/报表页/Excel 表头（服务端与客户端导出）动态显示当前国家/货币/税种。
 - 开户链路：品牌 / 商家 / 管理端新开账号时即创建用户并写入 bcrypt 初始密码（初始密码 = 开户密钥），新账号可直接用用户名 + 密码登录。
 - GitHub 本地化：`.gitignore`、`.env.example`、`server.js` 读取 `process.env.PORT`、数据库路径读取 `process.env.DATABASE_PATH`。
 
 ### 变更
 
-- 财务参数由「config.json 写死」改为「管理端可配置（settings 表优先，config.json 兜底）」；原有交易算法（读 `shops` 表店铺级参数）不受影响。
+- 财务参数由「config.json 写死」改为「管理端可配置（settings 表优先，config.json 兜底）」；`settings` 表旧键迁移为新键（`gst_rate → tax_rate`、`price_includes_gst → price_includes_tax`、`commission_apply_gst → commission_apply_tax`，旧值自动搬运后删除旧键）；`config.json` 结构调整为 `finance.*` + `scan.*`，键与 settings 表一一对应。原有交易算法（读 `shops` 表店铺级参数）不受影响。
 - `users` 表新增 `password_hash` 列与用户名唯一索引；`product_catalog` 表新增 `sku`、`category` 列；`shops` 表相关注册接口审计文案更新。
+- 品牌与文案：`package.json` name → `stockverify`；manifest、页面 title、i18n、footer、server 启动横幅全部更新为 StockVerify 多国定位；示例数据保留新加坡零售品类并标注「演示数据」。
+- README 顶部新增版本声明：「当前版本 v0.2.0，功能持续迭代中，部分模块（发货管理、推送通知）仍在规划」。
 - 全局清理「卡密 / demo / 演示 / 阶段 / 豆包」字样（UI、i18n、manifest、README、docs）；原登录接口功能与鉴权逻辑保持不变。
-- README「测试卡密见部署说明」→「初始账号见 docs/INIT.md」。
+
+### 1.7 验证矩阵（已通过）
+
+- 管理端切换 Malaysia / MYR / SST / 0.06 / 售价含税 → 扫码按 6% 口径计算（SST 表头）✅
+- 改回 Singapore / SGD / GST / 0.09 / 售价含税 → 恢复 9% 口径（GST 表头）✅
+- 原 `/api/*` 接口与 `/api/transactions/*` 算法未动 ✅
 
 ## v0.1.1（2026-10-05）— 商业化改造
 

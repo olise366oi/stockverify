@@ -6,7 +6,7 @@
  * - 数据读写复用现有 SQLite（data/inventory.db）
  * - 登录：用户名 + 密码（bcrypt 哈希校验），返回 JWT token
  * - 财务参数：数据库 settings 表（管理端可配置），config.json 仅作缺省
- * - 财务口径：售价含 GST（见 finance.js）
+ * - 财务口径：支持「售价含税 / 售价不含税」两种模式（见 finance.js），参数含国家/货币/税种/税率
  * - 防重复扫码：服务端按 config.json 的 scan.duplicateWindowMs（默认 5000ms）拦截
  * - 操作日志：复用 appendAuditLog（哈希链防篡改），额外写入 device_info 字段
  */
@@ -116,7 +116,7 @@ async function applyScan(req, res, type) {
 
     // 操作日志（哈希链不变，新增设备信息字段）
     await appendAuditLog(req.user.shopId, req.user.userId, req.user.username, type, product.id, product.name,
-      `${type === 'inbound' ? '入库' : '出库'}: ${product.name}, 数量: ${q}, 单价(含GST): ${product.sell_price}, 不含税: ${f.amountBeforeGST}, GST: ${f.gstAmount}`,
+      `${type === 'inbound' ? '入库' : '出库'}: ${product.name}, 数量: ${q}, 单价(${f.priceIncludesTax ? '含' : '不含'}${f.taxName}): ${product.sell_price}, 不含税: ${f.amountBeforeGST}, ${f.taxName}: ${f.gstAmount}`,
       device);
 
     const updated = await db.get('SELECT * FROM products WHERE id = ?', pid);
@@ -323,30 +323,34 @@ router.get('/export/excel', v1Auth, async (req, res) => {
     const sum = (arr, key) => arr.reduce((a, r) => a + (Number(r[key]) || 0), 0);
 
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'StockVerify SG';
+    wb.creator = 'StockVerify';
+    const CUR = s.currency.symbol;   // 货币符号（来自系统设置）
+    const TAX = s.tax.name;          // 税种名称（来自系统设置）
 
     // ---- Sheet1 汇总统计 ----
     const ws1 = wb.addWorksheet('汇总统计');
-    ws1.columns = [{ header: '项目', key: 'item', width: 30 }, { header: '数值', key: 'value', width: 18 }];
+    ws1.columns = [{ header: '项目', key: 'item', width: 30 }, { header: '数值', key: 'value', width: 26 }];
     ws1.addRow({ item: '店铺', value: shop.shop_name });
-    ws1.addRow({ item: 'GST 税率', value: s.gst.rate });
-    ws1.addRow({ item: '口径', value: s.gst.priceIncludesGst ? `售价含 GST（不含税基数=售价÷${(1 + s.gst.rate).toFixed(2)}）` : '售价不含 GST' });
+    ws1.addRow({ item: '国家/地区', value: s.country });
+    ws1.addRow({ item: '货币', value: `${s.currency.code} (${CUR})` });
+    ws1.addRow({ item: `${TAX} 税率`, value: s.tax.rate });
+    ws1.addRow({ item: '口径', value: s.tax.priceIncludesTax ? `售价含${TAX}（不含税基数=售价÷${(1 + s.tax.rate).toFixed(2)}）` : `售价不含${TAX}` });
     ws1.addRow({ item: '平台分成比例', value: s.split.platform });
     ws1.addRow({ item: '商家分成比例', value: s.split.merchant });
     ws1.addRow({ item: '佣金率', value: s.commission.rate });
-    ws1.addRow({ item: '佣金附加 GST', value: s.commission.applyGst ? '是' : '否' });
+    ws1.addRow({ item: `佣金附加${TAX}`, value: s.commission.applyTax ? '是' : '否' });
     ws1.addRow({ item: '交易笔数', value: rows.length });
     ws1.addRow({ item: '入库笔数', value: rows.filter(r => r.type === 'inbound').length });
     ws1.addRow({ item: '出库笔数', value: rows.filter(r => r.type === 'outbound').length });
-    ws1.addRow({ item: '不含税总额(SGD)', value: Number(sum(rows, 'amount_before_gst').toFixed(2)) });
-    ws1.addRow({ item: 'GST 总额(SGD)', value: Number(sum(rows, 'gst_amount').toFixed(2)) });
-    ws1.addRow({ item: '含税总额(SGD)', value: Number(sum(rows, 'total_amount').toFixed(2)) });
-    ws1.addRow({ item: '平台分成(SGD)', value: Number(sum(rows, 'platform_share').toFixed(2)) });
-    ws1.addRow({ item: '商家分成(SGD)', value: Number(sum(rows, 'merchant_share').toFixed(2)) });
+    ws1.addRow({ item: `不含税总额(${s.currency.code})`, value: Number(sum(rows, 'amount_before_gst').toFixed(2)) });
+    ws1.addRow({ item: `${TAX} 总额(${s.currency.code})`, value: Number(sum(rows, 'gst_amount').toFixed(2)) });
+    ws1.addRow({ item: `含税总额(${s.currency.code})`, value: Number(sum(rows, 'total_amount').toFixed(2)) });
+    ws1.addRow({ item: `平台分成(${s.currency.code})`, value: Number(sum(rows, 'platform_share').toFixed(2)) });
+    ws1.addRow({ item: `商家分成(${s.currency.code})`, value: Number(sum(rows, 'merchant_share').toFixed(2)) });
     const commissionGstTotal = Number(sum(rows, 'commission_gst').toFixed(2));
-    const commissionTotal = s.gst.rate > 0 ? Number((commissionGstTotal / s.gst.rate).toFixed(2)) : 0;
-    ws1.addRow({ item: '佣金(SGD)（=佣金GST÷税率）', value: commissionTotal });
-    ws1.addRow({ item: '佣金附加 GST(SGD)', value: commissionGstTotal });
+    const commissionTotal = s.tax.rate > 0 ? Number((commissionGstTotal / s.tax.rate).toFixed(2)) : 0;
+    ws1.addRow({ item: `佣金(${s.currency.code})（=佣金附加税÷税率）`, value: commissionTotal });
+    ws1.addRow({ item: `佣金附加${TAX}(${s.currency.code})`, value: commissionGstTotal });
     ws1.addRow({ item: '防重扫码窗口(ms)', value: s.scan.duplicateWindowMs });
     ws1.addRow({ item: '生成时间', value: new Date().toLocaleString('zh-CN') });
 
@@ -359,13 +363,13 @@ router.get('/export/excel', v1Auth, async (req, res) => {
       { header: '商品ID', key: 'pid', width: 8 },
       { header: '商品名称', key: 'name', width: 20 },
       { header: '数量', key: 'qty', width: 6 },
-      { header: '单价含GST(SGD)', key: 'price', width: 14 },
-      { header: '不含税基数(SGD)', key: 'base', width: 14 },
-      { header: 'GST(SGD)', key: 'gst', width: 10 },
-      { header: '含税总额(SGD)', key: 'total', width: 14 },
-      { header: '平台分成(SGD)', key: 'pf', width: 14 },
-      { header: '商家分成(SGD)', key: 'mf', width: 14 },
-      { header: '佣金GST(SGD)', key: 'cg', width: 12 },
+      { header: `单价${s.tax.priceIncludesTax ? '含' : '不含'}${TAX}(${s.currency.code})`, key: 'price', width: 16 },
+      { header: `不含税基数(${s.currency.code})`, key: 'base', width: 16 },
+      { header: `${TAX}(${s.currency.code})`, key: 'gst', width: 12 },
+      { header: `含税总额(${s.currency.code})`, key: 'total', width: 16 },
+      { header: `平台分成(${s.currency.code})`, key: 'pf', width: 16 },
+      { header: `商家分成(${s.currency.code})`, key: 'mf', width: 16 },
+      { header: `佣金${TAX}(${s.currency.code})`, key: 'cg', width: 14 },
       { header: '操作人', key: 'op', width: 12 },
       { header: '同步状态', key: 'sync', width: 10 }
     ];
@@ -416,29 +420,45 @@ router.get('/admin/settings', v1Auth, requireAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/v1/admin/settings — 修改财务参数
+// PUT /api/v1/admin/settings — 修改系统参数（国家/货币/税种/税率/分成/佣金/含税开关/公式说明）
 router.put('/admin/settings', v1Auth, requireAdmin, async (req, res) => {
   try {
     const b = req.body || {};
     const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
-    const gstRate = num(b.gstRate);
+    const taxRate = num(b.taxRate);
     const platform = num(b.platformShareRatio);
     const merchant = num(b.merchantShareRatio);
     const commissionRate = num(b.commissionRate);
+    const commissionTaxRate = num(b.commissionTaxRate);
 
-    if (gstRate === null || gstRate < 0 || gstRate > 1) return res.status(400).json({ error: 'GST 税率必须是 0–1 之间的数字' });
+    if (taxRate === null || taxRate < 0 || taxRate > 1) return res.status(400).json({ error: '税率必须是 0–1 之间的数字' });
     if (platform === null || platform < 0 || platform > 1) return res.status(400).json({ error: '平台分成比例必须是 0–1 之间的数字' });
     if (merchant === null || merchant < 0 || merchant > 1) return res.status(400).json({ error: '商家分成比例必须是 0–1 之间的数字' });
     if (commissionRate === null || commissionRate < 0 || commissionRate > 1) return res.status(400).json({ error: '佣金率必须是 0–1 之间的数字' });
-    const applyGst = b.commissionApplyGst === undefined ? true : Boolean(b.commissionApplyGst);
+    if (commissionTaxRate === null || commissionTaxRate < 0 || commissionTaxRate > 1) return res.status(400).json({ error: '佣金附加税率必须是 0–1 之间的数字' });
+    const applyTax = b.commissionApplyTax === undefined ? true : Boolean(b.commissionApplyTax);
+    const includesTax = b.priceIncludesTax === undefined ? true : Boolean(b.priceIncludesTax);
+    const str = (v, fb) => (v === undefined || v === null || String(v).trim() === '' ? fb : String(v).trim());
+    const country = str(b.country, 'Singapore');
+    const currencyCode = str(b.currencyCode, 'SGD');
+    const currencySymbol = str(b.currencySymbol, 'S$');
+    const taxName = str(b.taxName, 'GST');
+    const formulaNote = b.financeFormulaNote === undefined ? '' : String(b.financeFormulaNote).trim();
 
-    await setSetting('gst_rate', gstRate, req.user.username);
+    await setSetting('country', country, req.user.username);
+    await setSetting('currency_code', currencyCode, req.user.username);
+    await setSetting('currency_symbol', currencySymbol, req.user.username);
+    await setSetting('tax_name', taxName, req.user.username);
+    await setSetting('tax_rate', taxRate, req.user.username);
+    await setSetting('price_includes_tax', includesTax ? 1 : 0, req.user.username);
     await setSetting('platform_share_ratio', platform, req.user.username);
     await setSetting('merchant_share_ratio', merchant, req.user.username);
     await setSetting('commission_rate', commissionRate, req.user.username);
-    await setSetting('commission_apply_gst', applyGst ? 1 : 0, req.user.username);
-    await appendAuditLog(req.user.shopId, req.user.userId, req.user.username, 'settings_update', null, '财务设置',
-      `GST=${gstRate}, 平台分成=${platform}, 商家分成=${merchant}, 佣金率=${commissionRate}, 佣金附加GST=${applyGst ? '是' : '否'}`);
+    await setSetting('commission_tax_rate', commissionTaxRate, req.user.username);
+    await setSetting('commission_apply_tax', applyTax ? 1 : 0, req.user.username);
+    await setSetting('finance_formula_note', formulaNote, req.user.username);
+    await appendAuditLog(req.user.shopId, req.user.userId, req.user.username, 'settings_update', null, '系统设置',
+      `${country}/${currencyCode}/${taxName} 税率=${taxRate}, 含税=${includesTax ? '是' : '否'}, 平台分成=${platform}, 商家分成=${merchant}, 佣金率=${commissionRate}, 佣金附加税率=${commissionTaxRate}`);
 
     res.json({ success: true, settings: await finance.getSettingsFlat() });
   } catch (err) {

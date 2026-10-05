@@ -1,5 +1,5 @@
 /**
- * 新加坡商铺 PWA 库存管理系统 - 主服务器
+ * 多国零售 PWA 库存管理系统 - 主服务器
  * 功能：账户登录、商品CRUD、扫码出入库、离线同步、财务计算、报表导出、操作日志
  * 已改造为 sqlite‑wasm 异步数据库，移除better‑sqlite3
  */
@@ -2274,7 +2274,7 @@ async function bootstrap() {
   // 监听所有网卡（本机 + 局域网设备可访问）；登录有密钥+限流保护
   app.listen(PORT, () => {
     console.log('========================================');
-    console.log('  StockVerify SG 已启动');
+    console.log('  StockVerify 已启动');
     console.log('  本地访问: http://localhost:' + PORT);
     console.log('  局域网访问: http://<本机IP>:' + PORT + '（需防火墙放行 3000 端口）');
     console.log('========================================');

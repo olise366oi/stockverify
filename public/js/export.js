@@ -1,8 +1,13 @@
 /**
  * Excel 报表导出模块
- * 基于 SheetJS (xlsx) 库
+ * 基于 SheetJS (xlsx) 库；货币代码与税种名来自系统配置（Finance.getConfig），
+ * 默认演示配置为 SGD / GST。
  */
 const ExportManager = (() => {
+  // 货币代码与税种名（来自 /api/v1/config，登录时注入 Finance）
+  const cc = () => (Finance.getConfig().currencyCode || 'SGD');
+  const tax = () => (Finance.getConfig().taxName || 'GST');
+  const taxRate = () => (Finance.getConfig().gstRate || 0.09);
 
   /**
    * 导出交易记录为 Excel
@@ -15,6 +20,7 @@ const ExportManager = (() => {
       App.showToast('Excel 库加载失败，请检查网络');
       return;
     }
+    const CC = cc(); const TAX = tax(); const RATE = taxRate();
 
     // 工作表1：交易明细
     const detailData = transactions.map(t => ({
@@ -23,14 +29,14 @@ const ExportManager = (() => {
       '商品ID': t.product_id,
       '商品名称': t.product_name,
       '数量': t.quantity,
-      '单价(SGD)': t.unit_price,
-      '活动折扣(SGD)': t.discount_amount || 0,
-      '折后价(SGD)': t.discounted_price !== null && t.discounted_price !== undefined ? t.discounted_price : t.unit_price,
-      '不含税成交基数(SGD)': t.amount_before_gst,
-      'GST 9%(SGD)': t.gst_amount,
-      '含税总额(SGD)': t.total_amount,
-      '品牌方分成(SGD)': t.type === 'outbound' ? (t.brand_share || 0) : '-',
-      '商铺分成(SGD)': t.type === 'outbound' ? (t.merchant_share || 0) : '-',
+      ['单价(' + CC + ')']: t.unit_price,
+      ['活动折扣(' + CC + ')']: t.discount_amount || 0,
+      ['折后价(' + CC + ')']: t.discounted_price !== null && t.discounted_price !== undefined ? t.discounted_price : t.unit_price,
+      ['不含税成交基数(' + CC + ')']: t.amount_before_gst,
+      [TAX + ' ' + Math.round(RATE * 100) + '%(' + CC + ')']: t.gst_amount,
+      ['含税总额(' + CC + ')']: t.total_amount,
+      ['品牌方分成(' + CC + ')']: t.type === 'outbound' ? (t.brand_share || 0) : '-',
+      ['商铺分成(' + CC + ')']: t.type === 'outbound' ? (t.merchant_share || 0) : '-',
       '折扣状态': t.discount_status && t.discount_status !== 'none' ? (t.discount_status === 'approved' ? '√ 已通过' : (t.discount_status === 'rejected' ? '× 已驳回' : '待审核')) : '-',
       '核对状态': t.verified ? '√ 通过' : (t.type === 'inbound' ? '× 未通过' : '-'),
       '发货单ID': t.shipment_id || '',
@@ -52,26 +58,29 @@ const ExportManager = (() => {
     ];
 
     // 工作表2：汇总统计
-    const summaryData = [
+    const summaryDataFinal = [
       { '项目': '交易笔数', '数值': summary.count || 0 },
-      { '项目': '不含税总额(SGD)', '数值': summary.amountBeforeGST || 0 },
-      { '项目': 'GST总额 9%(SGD)', '数值': summary.gstAmount || 0 },
-      { '项目': '含税总额(SGD)', '数值': summary.totalAmount || 0 },
-      { '项目': '入库总数量', '数值': summary.inboundQty || 0 },
-      { '项目': '出库总数量', '数值': summary.outboundQty || 0 },
-      { '项目': '', '数值': '' },
-      { '项目': '分成明细', '数值': '' },
-      { '项目': '销售件数', '数值': summary.salesQty || 0 },
-      { '项目': '成本总额', '数值': summary.costTotal || 0 },
-      { '项目': '折扣总额', '数值': summary.discountTotal || 0 },
-      { '项目': '品牌方分成', '数值': summary.brandShare || 0 },
-      { '项目': '商铺分成', '数值': summary.merchantShare || 0 },
-      { '项目': '回款品牌方GST', '数值': summary.brandGst || 0 },
-      { '项目': '商铺自交GST', '数值': summary.merchantGst || 0 },
-      { '项目': '', '数值': '' },
-      { '项目': '报表生成时间', '数值': new Date().toLocaleString('zh-CN') }
+      { '项目': '国家/地区', '数值': (Finance.getConfig().country || '') },
+      { '项目': '货币', '数值': CC },
+      { '项目': '税种', '数值': TAX + ' ' + Math.round(RATE * 100) + '%' },
+      { ['不含税总额(' + CC + ')']: summary.amountBeforeGST || 0 },
+      { [TAX + '总额 ' + Math.round(RATE * 100) + '%(' + CC + ')']: summary.gstAmount || 0 },
+      { ['含税总额(' + CC + ')']: summary.totalAmount || 0 },
+      { '入库总数量': summary.inboundQty || 0 },
+      { '出库总数量': summary.outboundQty || 0 },
+      { '': '' },
+      { '分成明细': '' },
+      { '销售件数': summary.salesQty || 0 },
+      { '成本总额': summary.costTotal || 0 },
+      { '折扣总额': summary.discountTotal || 0 },
+      { '品牌方分成': summary.brandShare || 0 },
+      { '商铺分成': summary.merchantShare || 0 },
+      { '回款品牌方税': summary.brandGst || 0 },
+      { '商铺自交税': summary.merchantGst || 0 },
+      { '': '' },
+      { '报表生成时间': new Date().toLocaleString('zh-CN') }
     ];
-    const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+    const wsSummary = XLSX.utils.json_to_sheet(summaryDataFinal);
     wsSummary['!cols'] = [{ wch: 28 }, { wch: 24 }];
 
     // 工作表3：每日流水汇总
@@ -91,12 +100,12 @@ const ExportManager = (() => {
     const dailyData = Object.keys(dailyMap).sort().map(day => ({
       '日期': day,
       '销售件数': dailyMap[day].qty,
-      '折扣(SGD)': dailyMap[day].discount,
-      '不含税(SGD)': dailyMap[day].base.toFixed(2),
-      'GST(SGD)': dailyMap[day].gst.toFixed(2),
-      '含税总额(SGD)': dailyMap[day].total.toFixed(2),
-      '品牌方分成(SGD)': dailyMap[day].brand.toFixed(2),
-      '商铺分成(SGD)': dailyMap[day].merchant.toFixed(2)
+      ['折扣(' + CC + ')']: dailyMap[day].discount,
+      ['不含税(' + CC + ')']: dailyMap[day].base.toFixed(2),
+      [TAX + '(' + CC + ')']: dailyMap[day].gst.toFixed(2),
+      ['含税总额(' + CC + ')']: dailyMap[day].total.toFixed(2),
+      ['品牌方分成(' + CC + ')']: dailyMap[day].brand.toFixed(2),
+      ['商铺分成(' + CC + ')']: dailyMap[day].merchant.toFixed(2)
     }));
     const wsDaily = XLSX.utils.json_to_sheet(dailyData);
     wsDaily['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
@@ -122,14 +131,15 @@ const ExportManager = (() => {
       App.showToast('Excel 库加载失败');
       return;
     }
+    const CC = cc();
     const data = products.map(p => ({
       '商品ID': p.id,
       'SKU': p.sku || '',
       '条码': p.barcode,
       '商品名称': p.name,
       '分类': p.category || '',
-      '进价(SGD)': p.cost_price,
-      '售价(SGD)': p.sell_price,
+      ['进价(' + CC + ')']: p.cost_price,
+      ['售价(' + CC + ')']: p.sell_price,
       '当前库存': p.stock,
       '预警阈值': p.threshold,
       '库存状态': p.stock <= p.threshold ? '低库存' : '正常',

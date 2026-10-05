@@ -5,7 +5,7 @@ const I18n = (() => {
   const STORAGE_KEY = 'sg-lang';
   const DICT = {
     // 通用
-    app_name: { zh: 'StockVerify SG', en: 'StockVerify SG', ms: 'StockVerify SG' },
+    app_name: { zh: 'StockVerify', en: 'StockVerify', ms: 'StockVerify' },
     app_subtitle: { zh: '扫码出入库 · 离线可用 · GST自动计算', en: 'Scan in/out · Offline · Auto GST', ms: 'Imbas masuk/keluar · Luar talian · GST auto' },
     login: { zh: '登录', en: 'Login', ms: 'Log Masuk' },
     logout: { zh: '退出', en: 'Logout', ms: 'Log Keluar' },
@@ -33,7 +33,7 @@ const I18n = (() => {
     password_hint: { zh: '请输入用户名和密码以继续', en: 'Enter your username and password to continue', ms: 'Masukkan nama pengguna dan kata laluan untuk teruskan' },
     select_role: { zh: '选择登录身份', en: 'Select role', ms: 'Pilih peranan' },
     // 标价（按商品档案）
-    fixed_price_label: { zh: '标价 (SGD)', en: 'List Price (SGD)', ms: 'Harga Senarai (SGD)' },
+    fixed_price_label: { zh: '标价', en: 'List Price', ms: 'Harga Senarai' },
     fixed_price_hint: { zh: '标价按商品档案设置，商家可维护', en: 'List price comes from product profile, editable', ms: 'Harga senarai dari profil produk, boleh ubah' },
     // GST 固定（按注册国家）
     gst_fixed_label: { zh: 'GST 税率', en: 'GST Rate', ms: 'Kadar GST' },
@@ -184,7 +184,7 @@ const I18n = (() => {
     // 设置页更多功能
     more: { zh: '更多功能', en: 'More', ms: 'Lagi' },
     // 品牌管理平台（admin.html）
-    admin_title: { zh: 'StockVerify SG 品牌管理', en: 'StockVerify SG Brand Portal', ms: 'Portal Jenama StockVerify SG' },
+    admin_title: { zh: 'StockVerify 品牌管理', en: 'StockVerify Brand Portal', ms: 'Portal Jenama StockVerify' },
     admin_role_brand: { zh: '地区代理', en: 'Regional Distributor', ms: 'Pengedar Serantau' },
     admin_role_admin: { zh: 'StockVerify HQ', en: 'StockVerify HQ', ms: 'StockVerify HQ' },
     admin_login_sub: { zh: '地区代理：开通商家 · 发货 · 审核 | 峪锦：查看全部流水', en: 'Distributor: open merchants · ship · review | HQ: view all records', ms: 'Pengedar: buka peniaga · hantar · semak | HQ: lihat semua rekod' },

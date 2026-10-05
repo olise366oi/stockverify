@@ -1,6 +1,6 @@
 /**
  * 主应用逻辑（合作商家端）
- * StockVerify SG · 新加坡零售核销与对账系统
+ * StockVerify · 多国零售核销与税务对账系统
  * 合作商家扫码出入库 · 入库自动核对品牌方发货单（√/×） · 售价/成本按商品档案 · 三语
  */
 const App = (() => {
@@ -14,12 +14,28 @@ const App = (() => {
   let reportData = [];
   let shipmentDetailId = null; // 正在查看的发货单
   let lastLang = null;         // 记录已应用的语言，避免重复重渲染
+  let CUR = 'S$';              // 货币符号（默认演示配置 SGD；由 /api/v1/config 覆盖）
   const FIXED_PRICE = 188; // 缺省标价（实际以商品档案 sell_price 为准）
 
   // ========== 初始化 ==========
   async function init() {
     // 三语初始化
     I18n.init();
+    // 拉取系统配置（货币/税种/税率），更新展示
+    try {
+      const cfgRes = await fetch('/api/v1/config');
+      const cfgData = await cfgRes.json();
+      if (cfgData && cfgData.settings) {
+        const s = cfgData.settings;
+        CUR = s.currencySymbol || CUR;
+        Finance.setConfig({ gstRate: s.taxRate, currencySymbol: s.currencySymbol || '$', taxName: s.taxName || 'GST' });
+        const info = `${s.country || ''} · ${s.currencyCode || ''} · ${s.taxName || 'GST'} ${Number(s.taxRate || 0) * 100}% · 售价${s.priceIncludesTax ? '含税' : '不含税'}`;
+        const loginInfo = document.getElementById('login-config-info');
+        if (loginInfo) loginInfo.textContent = info;
+        const reportInfo = document.getElementById('report-config-info');
+        if (reportInfo) reportInfo.textContent = info;
+      }
+    } catch (e) { /* 配置拉取失败时使用默认展示 */ }
     // 语言真正变化后才重渲染动态内容
     window.__onLangChange = (lang) => {
       updateOfflineBar(0);
@@ -687,7 +703,7 @@ const App = (() => {
       <div class="product-item" style="cursor:pointer;" onclick="App.loadCatalogDetail(${c.catalog_id}, '${escapeHtml(c.name)}')">
         <div class="product-info">
           <div class="product-name">${escapeHtml(c.name)}</div>
-          <div class="product-meta">售价: S$${Number(c.sell_price || 0).toFixed(2)}</div>
+          <div class="product-meta">售价: ${CUR}${Number(c.sell_price || 0).toFixed(2)}</div>
         </div>
         <div style="display:flex;gap:20px;align-items:center;">
           <div class="product-stock">
@@ -806,7 +822,7 @@ const App = (() => {
           labels,
           datasets: [
             {
-              label: '营收 (S$)',
+              label: '营收 (' + CUR + ')',
               data: revenues,
               borderColor: '#6366f1',
               backgroundColor: gradient,
@@ -852,7 +868,7 @@ const App = (() => {
               cornerRadius: 8,
               callbacks: {
                 label: function(ctx) {
-                  if (ctx.datasetIndex === 0) return ' 营收: S$' + Number(ctx.parsed.y).toFixed(2);
+                  if (ctx.datasetIndex === 0) return ' 营收: ' + CUR + Number(ctx.parsed.y).toFixed(2);
                   return ' 销量: ' + ctx.parsed.y + ' 件';
                 }
               }
@@ -865,8 +881,8 @@ const App = (() => {
             },
             y: {
               type: 'linear', position: 'left',
-              title: { display: true, text: '营收(S$)', font: { size: 10 }, color: '#6366f1' },
-              ticks: { font: { size: 10 }, color: '#64748b', callback: v => 'S$' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v) },
+              title: { display: true, text: '营收(' + CUR + ')', font: { size: 10 }, color: '#6366f1' },
+              ticks: { font: { size: 10 }, color: '#64748b', callback: v => CUR + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v) },
               grid: { color: 'rgba(226,232,240,0.5)' }
             },
             y1: {
@@ -1060,9 +1076,9 @@ const App = (() => {
         const d = dailyMap[day];
         return `<tr>
           <td>${day}</td><td>${d.qty}</td>
-          <td>${d.discount > 0 ? '−S$' + d.discount.toFixed(2) : '-'}</td>
-          <td>S$${d.base.toFixed(2)}</td><td>S$${d.gst.toFixed(2)}</td>
-          <td>S$${d.total.toFixed(2)}</td><td>S$${d.brand.toFixed(2)}</td><td>S$${d.merchant.toFixed(2)}</td>
+          <td>${d.discount > 0 ? '−' + CUR + d.discount.toFixed(2) : '-'}</td>
+          <td>${CUR}${d.base.toFixed(2)}</td><td>${CUR}${d.gst.toFixed(2)}</td>
+          <td>${CUR}${d.total.toFixed(2)}</td><td>${CUR}${d.brand.toFixed(2)}</td><td>${CUR}${d.merchant.toFixed(2)}</td>
         </tr>`;
       }).join('');
       document.getElementById('report-daily-container').classList.remove('hidden');
@@ -1076,13 +1092,13 @@ const App = (() => {
           <td class="${t.type === 'inbound' ? 'type-inbound' : 'type-outbound'}">${t.type === 'inbound' ? I18n.t('only_in') : I18n.t('only_out')}</td>
           <td>${escapeHtml(t.product_name)}</td>
           <td>${t.quantity}</td>
-          <td>S$${Number(t.unit_price).toFixed(2)}</td>
-          <td>${Number(t.discount_amount) > 0 ? '<span class="discount-tag">−S$' + Number(t.discount_amount).toFixed(2) + '</span>' : '-'}</td>
-          <td>S$${Number(t.amount_before_gst).toFixed(2)}</td>
-          <td>S$${Number(t.gst_amount).toFixed(2)}</td>
-          <td>S$${Number(t.total_amount).toFixed(2)}</td>
-          <td>${t.type === 'sale' ? 'S$' + Number(t.brand_share || 0).toFixed(2) : '-'}</td>
-          <td>${t.type === 'sale' ? 'S$' + Number(t.merchant_share || 0).toFixed(2) : '-'}</td>
+          <td>${CUR}${Number(t.unit_price).toFixed(2)}</td>
+          <td>${Number(t.discount_amount) > 0 ? '<span class="discount-tag">−' + CUR + Number(t.discount_amount).toFixed(2) + '</span>' : '-'}</td>
+          <td>${CUR}${Number(t.amount_before_gst).toFixed(2)}</td>
+          <td>${CUR}${Number(t.gst_amount).toFixed(2)}</td>
+          <td>${CUR}${Number(t.total_amount).toFixed(2)}</td>
+          <td>${t.type === 'sale' ? CUR + Number(t.brand_share || 0).toFixed(2) : '-'}</td>
+          <td>${t.type === 'sale' ? CUR + Number(t.merchant_share || 0).toFixed(2) : '-'}</td>
           <td>${t.verified ? '<span class="verify-ok">√</span>' : (t.type === 'inbound' ? '<span class="verify-no">×</span>' : '-')}</td>
           <td>${escapeHtml(t.operator_name)}</td>
         </tr>
@@ -1444,7 +1460,7 @@ const App = (() => {
         sel.innerHTML = `<option value="" data-i18n="purchase_noproduct">暂无商品，请等待品牌方授权后再进货</option>`;
       } else {
         sel.innerHTML = `<option value="" data-i18n="purchase_sel_ph">请选择要进货的商品</option>` +
-          catalog.map(c => `<option value="catalog_${c.id}" data-name="${escapeHtml(c.name)}" data-price="${c.cost_price}">${escapeHtml(c.name)}（成本 S$${Number(c.cost_price).toFixed(2)} · 售价 S$${Number(c.sell_price).toFixed(2)}）</option>`).join('');
+          catalog.map(c => `<option value="catalog_${c.id}" data-name="${escapeHtml(c.name)}" data-price="${c.cost_price}">${escapeHtml(c.name)}（成本 ${CUR}${Number(c.cost_price).toFixed(2)} · 售价 ${CUR}${Number(c.sell_price).toFixed(2)}）</option>`).join('');
       }
       I18n.apply();
     }
@@ -1466,9 +1482,9 @@ const App = (() => {
 
   function updatePurchaseTotal() {
     const qty = parseInt(document.getElementById('purchase-qty').value) || 0;
-    const total = qty * 20; // 品牌供货价 S$20/个（品牌链路业务规则）
+    const total = qty * 20; // 品牌供货价 20/个（品牌链路业务规则）
     const el = document.getElementById('purchase-total');
-    if (el) el.textContent = 'S$' + total.toFixed(2);
+    if (el) el.textContent = CUR + total.toFixed(2);
   }
 
   function clickPurchaseUpload() {
@@ -1538,7 +1554,7 @@ const App = (() => {
             ${p.payment_img ? `<img class="po-img" src="${p.payment_img}" onclick="window.open('${p.payment_img}','_blank')">` : ''}
           </div>
           <div class="po-side">
-            <span class="po-cost">S$${Number(p.total_cost).toFixed(2)}</span>
+            <span class="po-cost">${CUR}${Number(p.total_cost).toFixed(2)}</span>
             <span class="chip ${st[p.status] ? st[p.status].cls : ''}">${st[p.status] ? st[p.status].text : p.status}</span>
           </div>
         </div>`).join('');

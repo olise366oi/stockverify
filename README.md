@@ -1,18 +1,21 @@
-# StockVerify SG · 新加坡零售核销与对账系统
+# StockVerify · 多国零售核销与税务对账系统
 
-> 面向新加坡零售商铺的扫码核销与 GST 对账系统（PWA）
+> 当前版本 v0.2.0，功能持续迭代中，部分模块（发货管理、推送通知）仍在规划。
 >
-> 用户名密码登录 · 扫码出入库 · 离线不丢记录 · GST 自动计算 · 7:3 分成 · Excel 对账报表 · 操作留痕
+> 面向多国零售商铺的扫码核销与税务对账系统（PWA）
+>
+> 用户名密码登录 · 扫码出入库 · 离线不丢记录 · 多税制多货币自动计算 · 平台/商家分成 · Excel 对账报表 · 操作留痕
 
 ## 项目简介
 
-StockVerify SG 为新加坡零售商铺提供「扫码核销 + 财务对账」的一体化解决方案：
+StockVerify 为多国零售商铺提供「扫码核销 + 财务对账」的一体化解决方案，支持多地区、多税制、多货币（国家 / 货币 / 税种 / 税率全部由管理端「系统设置」页配置，新加坡 GST 只是默认演示配置之一）：
 
 - 每个商铺持独立账号（用户名 + 密码，bcrypt 哈希存储）登录，数据按店铺完全隔离；
 - 店员用手机摄像头扫码完成**入库/出库**，库存实时增减；
 - **离线断网**时扫码记录先存本地（IndexedDB），联网后自动补传，一条不丢；
-- 财务侧按**售价含 GST** 口径自动计算不含税基数、GST、平台/商家 7:3 分成与佣金附加 GST，参数由管理端在「财务设置」页维护；
-- 一键导出 **Excel 对账报表**，操作日志以 SHA-256 哈希链防篡改，可审计。
+- 财务侧按配置口径（售价含税 / 不含税均可）自动计算不含税基数、税额、平台/商家分成与佣金附加税；
+- 一键导出 **Excel 对账报表**（表头显示当前货币与税种），操作日志以 SHA-256 哈希链防篡改，可审计；
+- 内置示例数据为新加坡零售品类（药品/食品/日用品，**演示数据**，仅用于展示）。
 
 ## 功能列表
 
@@ -23,10 +26,11 @@ StockVerify SG 为新加坡零售商铺提供「扫码核销 + 财务对账」�
 | 出库扫码 | 售出扫码确认，库存自动扣减，附财务预览 |
 | 离线模式 | 断网时记录存 IndexedDB，联网自动补传（含 iOS Safari） |
 | 待上传提示 | 页面顶部实时显示「网络已断开 / 待上传 X 条」 |
-| GST 自动计算 | 不含税基数、GST、7:3 分成、佣金附加 GST 全自动 |
-| 财务设置 | 管理端可视化配置 GST 税率 / 分成比例 / 佣金率（存 settings 表） |
+| 多地区多税制 | 国家 / 货币代码与符号 / 税种名称（GST、VAT、SST…）/ 税率均可配置 |
+| 双口径计算 | 售价含税 / 售价不含税两种模式，由设置开关切换 |
+| 系统设置 | 管理端可视化配置国家、货币、税种、税率、分成、佣金与公式说明 |
 | 商品管理 | 管理端可新增 / 编辑 / 上架 / 下架商品（SKU、名称、分类、售价、成本、库存、状态） |
-| Excel 对账 | 服务端生成「汇总统计 + 交易明细」双工作表报表 |
+| Excel 对账 | 服务端生成「汇总统计 + 交易明细」双工作表报表，表头含当前货币与税种 |
 | 操作日志 | 账号、时间、商品、动作、数量、设备信息全留痕，哈希链防篡改 |
 | 扫码防重复 | 同店铺同商品同类型 5 秒窗口拦截（前后端双重） |
 | 多店铺隔离 | 不同账号 = 不同店铺，数据完全隔离 |
@@ -66,19 +70,19 @@ npm start
 
 工程化接口统一挂载于 `/api/v1/` 前缀，与原有 `/api/*` 接口（`/api/auth/login`、`/api/products`、`/api/transactions/*`、`/api/logs` 等）并存、互不影响。
 
-### 财务公式（口径：售价含 GST；参数来自数据库 settings 表，config.json 仅作默认值）
+### 财务公式（参数来自数据库 settings 表，config.json 仅作默认值；支持两种口径）
 
-| 字段 | 公式 | 说明 |
+| 字段 | 售价含税（默认） | 售价不含税 |
 |---|---|---|
-| 不含税成交基数 | 售价 ÷ (1 + GST税率) | 从含税售价倒推（默认税率 9%） |
-| GST | 不含税基数 × GST税率 | |
-| 含税总额 | 不含税基数 + GST | 应等于售价 |
-| 平台分成 | 不含税基数 × 平台比例（默认 70%） | 7/3 分成，管理端可配置 |
-| 商家分成 | 不含税基数 × 商家比例（默认 30%） | |
-| 佣金 | 不含税基数 × 佣金率（默认 3%） | 管理端可配置 |
-| 佣金附加 GST | 佣金 × GST税率 | 可开关 |
+| 不含税成交基数 | 售价 ÷ (1 + 税率) | 售价 |
+| 税额 | 不含税基数 × 税率 | 不含税基数 × 税率 |
+| 含税总额 | 不含税基数 + 税额 | 不含税基数 + 税额 |
+| 平台分成 | 不含税基数 × 平台比例（默认 70%） | 同左 |
+| 商家分成 | 不含税基数 × 商家比例（默认 30%） | 同左 |
+| 佣金 | 不含税基数 × 佣金率（默认 3%） | 同左 |
+| 佣金附加税 | 佣金 × 税率（可开关，默认开） | 同左 |
 
-示例（默认参数）：售价 S$6.50、数量 2 → 不含税基数 11.93、GST 1.07、含税总额 13.00、平台分成 8.35、商家分成 3.58、佣金 0.36、佣金 GST 0.03。
+示例（默认演示配置：Singapore / SGD / GST 9% / 售价含税）：售价 S$6.50、数量 2 → 不含税基数 11.93、GST 1.07、含税总额 13.00、平台分成 8.35、商家分成 3.58、佣金 0.36、佣金附加 GST 0.03。
 
 ### 接口清单
 
@@ -93,24 +97,34 @@ npm start
 | GET | `/api/v1/logs` | 同上 Header | 最近 200 条操作日志（含账号、时间、商品、动作、数量、设备信息、哈希链） |
 | GET | `/api/v1/export/excel` | 同上 Header | 服务端生成 Excel 对账报表，返回 `.xlsx` 文件流 |
 | GET | `/api/v1/config` | 无 | 返回当前财务参数（来自 settings 表） |
-| GET | `/api/v1/admin/settings` | 管理端 Header | 读取财务参数（GST / 分成 / 佣金） |
-| PUT | `/api/v1/admin/settings` | `{ gstRate, platformShareRatio, merchantShareRatio, commissionRate, commissionApplyGst }` | 修改财务参数（需管理端权限） |
+| GET | `/api/v1/admin/settings` | 管理端 Header | 读取系统设置（国家/货币/税种/分成/佣金/含税开关/公式说明） |
+| PUT | `/api/v1/admin/settings` | `{ country, currencyCode, currencySymbol, taxName, taxRate, platformShareRatio, merchantShareRatio, commissionRate, commissionTaxRate, priceIncludesTax, commissionApplyTax, financeFormulaNote }` | 修改系统设置（需管理端权限） |
 | GET | `/api/v1/admin/products` | 管理端 Header | 商品列表（含库存、状态） |
 | POST | `/api/v1/admin/products` | `{ sku, name, category, costPrice, sellPrice, description? }` | 新增商品 |
 | PUT | `/api/v1/admin/products/:id` | 同上（可部分更新） | 编辑商品 |
 | PATCH | `/api/v1/admin/products/:id/status` | `{ status: active/inactive }` | 上架 / 下架商品 |
 
-### 财务参数配置（管理端「财务设置」页 → settings 表）
+### 系统设置配置（管理端「系统设置」页 → settings 表）
 
-`settings` 表为 key-value 结构，管理端登录后可在「财务设置」页修改 GST 税率、平台/商家分成比例、佣金率、佣金附加 GST 开关；`finance.js` 优先读数据库，`config.json` 仅作缺省默认值。原有交易算法（读 `shops` 表店铺级参数）不受影响。
+`settings` 表为 key-value 结构，管理端登录后可在「系统设置」页修改：国家/地区、货币代码、货币符号、税种名称、税率、平台/商家分成比例、佣金率、佣金附加税率、售价是否含税开关、佣金附加税开关、财务公式说明文本。`finance.js` 优先读数据库，`config.json` 仅作缺省默认值。原有交易算法（读 `shops` 表店铺级参数）不受影响。
 
 ```json
-// config.json（仅作默认值）
+// config.json（仅作默认值，键与 settings 表一一对应）
 {
-  "gst":   { "rate": 0.09, "priceIncludesGst": true },
-  "split": { "platform": 0.7, "merchant": 0.3 },
-  "commission": { "rate": 0.03, "applyGst": true },
-  "scan":  { "duplicateWindowMs": 5000 }
+  "finance": {
+    "country": "Singapore",
+    "currencyCode": "SGD",
+    "currencySymbol": "S$",
+    "taxName": "GST",
+    "taxRate": 0.09,
+    "priceIncludesTax": true,
+    "platformShareRatio": 0.7,
+    "merchantShareRatio": 0.3,
+    "commissionRate": 0.03,
+    "commissionTaxRate": 0.09,
+    "commissionApplyTax": true
+  },
+  "scan": { "duplicateWindowMs": 5000 }
 }
 ```
 
@@ -154,7 +168,7 @@ my-pwa/
 ├── package.json          # 项目配置与依赖（exceljs、bcryptjs 等）
 ├── server.js             # 后端服务器（原有全部 API + /api/v1 挂载）
 ├── routes-v1.js          # API v1 接口模块（登录/扫码/同步/报表/管理端）
-├── finance.js            # 财务计算模块（GST/分成/佣金，读 settings 表）
+├── finance.js            # 财务计算模块（税/分成/佣金，读 settings 表，支持含税/不含税双口径）
 ├── config.json           # 财务参数默认值（管理端可覆盖，存 settings 表）
 ├── database.js           # SQLite 初始化与工具函数（含日志哈希链、settings 种子）
 ├── .env.example          # 环境变量示例
@@ -167,10 +181,10 @@ my-pwa/
 │   └── CHANGELOG.md      # 版本变更记录（v0.1.0 / v0.1.1 / v0.2.0）
 ├── public/               # 前端（PWA）
 │   ├── index.html        # 合作商家端主页面
-│   ├── admin.html        # 品牌方/管理端（含财务设置、商品管理）
+│   ├── admin.html        # 品牌方/管理端（含系统设置、商品管理）
 │   ├── register.html     # 管理端入口跳转页
 │   ├── offline.html      # 离线提示页
-│   ├── manifest.json     # PWA 清单（StockVerify SG）
+│   ├── manifest.json     # PWA 清单（StockVerify）
 │   ├── sw.js             # Service Worker（应用外壳缓存）
 │   ├── css/style.css     # 样式
 │   ├── img/stockverify-logo.png  # 品牌字标

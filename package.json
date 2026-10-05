@@ -1,7 +1,7 @@
 {
-  "name": "stockverify-sg",
+  "name": "stockverify",
   "version": "0.2.0",
-  "description": "StockVerify SG - 面向新加坡零售商铺的扫码核销与 GST 对账系统（PWA）",
+  "description": "StockVerify - 面向多国零售商铺的扫码核销与税务对账系统（PWA）",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

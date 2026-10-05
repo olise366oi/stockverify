@@ -1,6 +1,6 @@
 /**
- * StockVerify SG 品牌管理平台（品牌方 / 管理端）
- * - 管理端：注册品牌方、为品牌开通商家、查看所有品牌/商家销售数据
+ * StockVerify 品牌管理平台（品牌方 / 管理端）
+ * - 管理端：注册品牌方、为品牌开通商家、查看所有品牌/商家销售数据、系统设置（国家/货币/税种）
  * - 品牌方：查看自家合作商家销售数据、开通商家、新建发货单并逐件清点后发货
  */
 const Admin = (() => {
@@ -14,6 +14,7 @@ const Admin = (() => {
   let currentMerchantId = null;  // 正在查看的商家
   let shipmentDetailId = null;   // 正在查看的发货单
   let packingItems = [];
+  let CUR = 'S$';                // 货币符号（默认演示配置 SGD；由 /api/v1/config 覆盖）
 
   // 图片压缩（转为 base64，控制尺寸）——admin.html 不加载 app.js，需独立定义
   function compressImage(file) {
@@ -293,10 +294,10 @@ const Admin = (() => {
           <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">普通代理数</div><div class="stat-value">${data.agents.length}</div></div>
             <div class="stat-card"><div class="stat-label">商铺数</div><div class="stat-value">${data.merchants.length}</div></div>
-            <div class="stat-card"><div class="stat-label">今日销售额</div><div class="stat-value">S$${Number(s.today_sales || 0).toFixed(2)}</div></div>
+            <div class="stat-card"><div class="stat-label">今日销售额</div><div class="stat-value">${CUR}${Number(s.today_sales || 0).toFixed(2)}</div></div>
             <div class="stat-card"><div class="stat-label">今日订单</div><div class="stat-value">${s.today_count || 0}</div></div>
-            <div class="stat-card"><div class="stat-label">累计销售额</div><div class="stat-value">S$${Number(s.total_sales || 0).toFixed(2)}</div></div>
-            <div class="stat-card"><div class="stat-label">品牌累计分成</div><div class="stat-value">S$${Number(s.total_brand_share || 0).toFixed(2)}</div></div>
+            <div class="stat-card"><div class="stat-label">累计销售额</div><div class="stat-value">${CUR}${Number(s.total_sales || 0).toFixed(2)}</div></div>
+            <div class="stat-card"><div class="stat-label">品牌累计分成</div><div class="stat-value">${CUR}${Number(s.total_brand_share || 0).toFixed(2)}</div></div>
           </div>
         </div>
         <div class="section-card">
@@ -406,11 +407,11 @@ const Admin = (() => {
       <div class="section-card">
         <h3>地区销售详情</h3>
         <div class="stats-grid">
-          <div class="stat-card"><div class="stat-label">今日销售额</div><div class="stat-value">S$${Number(s.today_sales || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">今日销售额</div><div class="stat-value">${CUR}${Number(s.today_sales || 0).toFixed(2)}</div></div>
           <div class="stat-card"><div class="stat-label">今日订单数</div><div class="stat-value">${s.today_count || 0}</div></div>
-          <div class="stat-card"><div class="stat-label">累计销售额</div><div class="stat-value">S$${Number(s.total_sales || 0).toFixed(2)}</div></div>
-          <div class="stat-card"><div class="stat-label">品牌累计分成</div><div class="stat-value">S$${Number(s.total_brand_share || 0).toFixed(2)}</div></div>
-          <div class="stat-card"><div class="stat-label">商家累计分成</div><div class="stat-value">S$${Number(s.total_merchant_share || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">累计销售额</div><div class="stat-value">${CUR}${Number(s.total_sales || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">品牌累计分成</div><div class="stat-value">${CUR}${Number(s.total_brand_share || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">商家累计分成</div><div class="stat-value">${CUR}${Number(s.total_merchant_share || 0).toFixed(2)}</div></div>
         </div>
       </div>`;
   }
@@ -464,7 +465,7 @@ const Admin = (() => {
         data: {
           labels,
           datasets: [
-            { label: '营收 (S$)', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
+            { label: '营收 (' + CUR + ')', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
             { label: '销量 (件)', data: qtys, borderColor: '#f59e0b', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: pointR > 0 ? 2 : 0, pointHoverRadius: 5, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 1.5, borderWidth: 1.5, borderDash: [4, 2], yAxisID: 'y1' }
           ]
         },
@@ -474,7 +475,7 @@ const Admin = (() => {
           plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
           scales: {
             x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 15, autoSkipPadding: 10 }, grid: { display: false } },
-            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => 'S$' + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => CUR + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
             y1: { type: 'linear', position: 'right', ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -527,7 +528,7 @@ const Admin = (() => {
           labels,
           datasets: [
             { label: '销量 (件)', data: sales, backgroundColor: 'rgba(99,102,241,0.7)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 4, yAxisID: 'y' },
-            { label: '营收 (S$)', data: revenues, backgroundColor: 'rgba(245,158,11,0.6)', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 4, yAxisID: 'y1' }
+            { label: '营收 (' + CUR + ')', data: revenues, backgroundColor: 'rgba(245,158,11,0.6)', borderColor: '#f59e0b', borderWidth: 1, borderRadius: 4, yAxisID: 'y1' }
           ]
         },
         options: {
@@ -536,7 +537,7 @@ const Admin = (() => {
           scales: {
             x: { ticks: { font: { size: 11 } }, grid: { display: false } },
             y: { type: 'linear', position: 'left', beginAtZero: true, ticks: { font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' }, title: { display: true, text: '销量', font: { size: 10 } } },
-            y1: { type: 'linear', position: 'right', beginAtZero: true, ticks: { font: { size: 10 }, callback: v => 'S$' + v }, grid: { display: false }, title: { display: true, text: '营收', font: { size: 10 } } }
+            y1: { type: 'linear', position: 'right', beginAtZero: true, ticks: { font: { size: 10 }, callback: v => CUR + v }, grid: { display: false }, title: { display: true, text: '营收', font: { size: 10 } } }
           }
         }
       });
@@ -658,7 +659,7 @@ const Admin = (() => {
         data: {
           labels,
           datasets: [
-            { label: '营收 (S$)', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
+            { label: '营收 (' + CUR + ')', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
             { label: '销量 (件)', data: qtys, borderColor: '#f59e0b', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: pointR > 0 ? 2 : 0, pointHoverRadius: 5, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 1.5, borderWidth: 1.5, borderDash: [4, 2], yAxisID: 'y1' }
           ]
         },
@@ -668,7 +669,7 @@ const Admin = (() => {
           plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
           scales: {
             x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 15, autoSkipPadding: 10 }, grid: { display: false } },
-            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => 'S$' + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => CUR + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
             y1: { type: 'linear', position: 'right', ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -706,11 +707,11 @@ const Admin = (() => {
         <div class="admin-brand-card" data-catalog-id="${c.id}" style="cursor:pointer;${isOffline ? 'opacity:0.5;' : ''}">
           <div class="admin-brand-card-head">
             <span class="admin-brand-name">${escapeHtml(c.name)}${isOffline ? ' <span class="chip chip-no">已下架</span>' : ' <span class="chip chip-ok">在售</span>'}</span>
-            <span class="chip chip-ok">S$${Number(c.sell_price).toFixed(2)}</span>
+            <span class="chip chip-ok">${CUR}${Number(c.sell_price).toFixed(2)}</span>
           </div>
           <div class="admin-brand-meta">
             ${c.sku ? 'SKU ' + escapeHtml(c.sku) + ' · ' : ''}${escapeHtml(c.category || '未分类')}
-            · 库存 ${c.in_stock || 0} 件 · 成本 S$${Number(c.cost_price).toFixed(2)}
+            · 库存 ${c.in_stock || 0} 件 · 成本 ${CUR}${Number(c.cost_price).toFixed(2)}
           </div>
           <div class="admin-brand-meta">
             已授权 ${c.auth_count || 0} 家
@@ -933,8 +934,8 @@ const Admin = (() => {
       <div class="section-card">
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">总订单</div><div class="stat-value">${s.totalOrders || 0}</div></div>
-          <div class="stat-card"><div class="stat-label">总营收</div><div class="stat-value">S$${Number(s.totalRevenue || 0).toFixed(2)}</div></div>
-          <div class="stat-card"><div class="stat-label">总GST</div><div class="stat-value">S$${Number(s.totalGst || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">总营收</div><div class="stat-value">${CUR}${Number(s.totalRevenue || 0).toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">总GST</div><div class="stat-value">${CUR}${Number(s.totalGst || 0).toFixed(2)}</div></div>
           ${s.todayOrders !== undefined ? `<div class="stat-card"><div class="stat-label">今日订单</div><div class="stat-value">${s.todayOrders}</div></div>` : ''}
           ${s.merchantCount !== undefined ? `<div class="stat-card"><div class="stat-label">下属商铺</div><div class="stat-value">${s.merchantCount}</div></div>` : ''}
         </div>
@@ -1007,7 +1008,7 @@ const Admin = (() => {
         data: {
           labels,
           datasets: [
-            { label: '营收 (S$)', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
+            { label: '营收 (' + CUR + ')', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
             { label: '销量 (件)', data: qtys, borderColor: '#f59e0b', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: pointR > 0 ? 2 : 0, pointHoverRadius: 5, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 1.5, borderWidth: 1.5, borderDash: [4, 2], yAxisID: 'y1' }
           ]
         },
@@ -1017,7 +1018,7 @@ const Admin = (() => {
           plugins: { legend: { position: 'top', labels: { font: { size: 11 }, usePointStyle: true } } },
           scales: {
             x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 15, autoSkipPadding: 10 }, grid: { display: false } },
-            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => 'S$' + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => CUR + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
             y1: { type: 'linear', position: 'right', ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -1197,7 +1198,7 @@ const Admin = (() => {
       <div class="section-card">
         <h3>商品</h3>
         <div class="admin-brand-meta">
-          商品名称：${escapeHtml(catalog.name)} · 成本 S$${Number(catalog.cost_price).toFixed(2)} · 售价 S$${Number(catalog.sell_price).toFixed(2)}
+          商品名称：${escapeHtml(catalog.name)} · 成本 ${CUR}${Number(catalog.cost_price).toFixed(2)} · 售价 ${CUR}${Number(catalog.sell_price).toFixed(2)}
         </div>
         <div class="form-group" style="margin-top:12px;">
           <label>商品描述</label>
@@ -1351,15 +1352,31 @@ const Admin = (() => {
     try {
       const data = await api('/api/v1/admin/settings');
       const s = data.settings;
+      CUR = s.currencySymbol || CUR;
       const num = (v) => Number(v).toFixed(2);
       el.innerHTML = `
         <div class="section-card" style="margin:12px;">
-          <h3>财务参数（对 /api/v1 核销口径生效；原有交易算法不受影响）</h3>
-          <p class="hint" style="margin-bottom:12px;">口径：售价含 GST。不含税基数 = 售价 ÷ (1 + GST税率)；GST = 不含税基数 × 税率；平台/商家分成按不含税基数 × 比例；佣金附加 GST = 佣金 × 税率。</p>
+          <h3>系统设置（国家 / 货币 / 税种 / 分成 / 佣金 · 对 /api/v1 核销口径生效；原有交易算法不受影响）</h3>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
             <div class="form-group" style="flex:1;min-width:200px;">
-              <label>GST 税率（0–1，0.09 = 9%）</label>
-              <input type="number" id="set-gst-rate" value="${num(s.gstRate)}" step="0.01" min="0" max="1">
+              <label>国家/地区（如 Singapore / Malaysia / Australia）</label>
+              <input type="text" id="set-country" value="${escapeHtml(s.country || '')}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:160px;">
+              <label>货币代码（如 SGD / MYR / AUD）</label>
+              <input type="text" id="set-currency-code" value="${escapeHtml(s.currencyCode || '')}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label>货币符号（如 S\$ / RM / A\$）</label>
+              <input type="text" id="set-currency-symbol" value="${escapeHtml(s.currencySymbol || '')}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:120px;">
+              <label>税种名称（如 GST / VAT / SST）</label>
+              <input type="text" id="set-tax-name" value="${escapeHtml(s.taxName || '')}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:200px;">
+              <label>税率（0–1，0.09 = 9%）</label>
+              <input type="number" id="set-tax-rate" value="${num(s.taxRate)}" step="0.01" min="0" max="1">
             </div>
             <div class="form-group" style="flex:1;min-width:200px;">
               <label>平台分成比例（0–1，0.7 = 70%）</label>
@@ -1374,15 +1391,30 @@ const Admin = (() => {
               <input type="number" id="set-commission" value="${num(s.commissionRate)}" step="0.01" min="0" max="1">
             </div>
             <div class="form-group" style="flex:1;min-width:200px;">
-              <label>佣金附加 GST</label>
-              <select id="set-commission-gst">
-                <option value="1" ${s.commissionApplyGst ? 'selected' : ''}>是</option>
-                <option value="0" ${!s.commissionApplyGst ? 'selected' : ''}>否</option>
+              <label>佣金附加税率（0–1，0.09 = 9%）</label>
+              <input type="number" id="set-commission-tax" value="${num(s.commissionTaxRate)}" step="0.01" min="0" max="1">
+            </div>
+            <div class="form-group" style="flex:1;min-width:200px;">
+              <label>售价是否含税</label>
+              <select id="set-includes-tax">
+                <option value="1" ${s.priceIncludesTax ? 'selected' : ''}>含税（不含税基数 = 售价 ÷ (1+税率)）</option>
+                <option value="0" ${!s.priceIncludesTax ? 'selected' : ''}>不含税（不含税基数 = 售价）</option>
               </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:200px;">
+              <label>佣金附加税开关</label>
+              <select id="set-commission-apply-tax">
+                <option value="1" ${s.commissionApplyTax ? 'selected' : ''}>是</option>
+                <option value="0" ${!s.commissionApplyTax ? 'selected' : ''}>否</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:100%;">
+              <label>财务公式说明（展示用，可编辑）</label>
+              <textarea id="set-formula-note" rows="3" style="width:100%;resize:vertical;">${escapeHtml(s.financeFormulaNote || '')}</textarea>
             </div>
           </div>
           <div style="margin-top:16px;">
-            <button type="button" class="btn btn-primary" onclick="Admin.saveAdminSettings()">保存财务设置</button>
+            <button type="button" class="btn btn-primary" onclick="Admin.saveAdminSettings()">保存系统设置</button>
             <span class="hint" id="set-save-msg"></span>
           </div>
         </div>`;
@@ -1394,18 +1426,26 @@ const Admin = (() => {
   async function saveAdminSettings() {
     try {
       const body = {
-        gstRate: parseFloat(document.getElementById('set-gst-rate').value),
+        country: document.getElementById('set-country').value.trim(),
+        currencyCode: document.getElementById('set-currency-code').value.trim(),
+        currencySymbol: document.getElementById('set-currency-symbol').value.trim(),
+        taxName: document.getElementById('set-tax-name').value.trim(),
+        taxRate: parseFloat(document.getElementById('set-tax-rate').value),
         platformShareRatio: parseFloat(document.getElementById('set-platform').value),
         merchantShareRatio: parseFloat(document.getElementById('set-merchant').value),
         commissionRate: parseFloat(document.getElementById('set-commission').value),
-        commissionApplyGst: document.getElementById('set-commission-gst').value === '1'
+        commissionTaxRate: parseFloat(document.getElementById('set-commission-tax').value),
+        priceIncludesTax: document.getElementById('set-includes-tax').value === '1',
+        commissionApplyTax: document.getElementById('set-commission-apply-tax').value === '1',
+        financeFormulaNote: document.getElementById('set-formula-note').value.trim()
       };
       const data = await api('/api/v1/admin/settings', {
         method: 'PUT',
         body: JSON.stringify(body)
       });
+      CUR = data.settings.currencySymbol || CUR;
       document.getElementById('set-save-msg').textContent = '已保存（更新于 ' + new Date().toLocaleTimeString('zh-CN') + '）';
-      showToast('财务设置已保存');
+      showToast('系统设置已保存');
     } catch (err) { showToast(err.message); }
   }
 
@@ -1589,7 +1629,7 @@ const Admin = (() => {
       document.getElementById('admin-d-products').innerHTML = products.length === 0
         ? `<div class="empty-tip">${I18n.t('no_products')}</div>`
         : `<div class="mini-table">${products.map(p => `
-            <div class="mini-row"><span>${escapeHtml(p.name)}</span><span>库存 ${p.stock} · S$${Number(p.sell_price).toFixed(2)}</span></div>`).join('')}</div>`;
+            <div class="mini-row"><span>${escapeHtml(p.name)}</span><span>库存 ${p.stock} · ${CUR}${Number(p.sell_price).toFixed(2)}</span></div>`).join('')}</div>`;
       const trans = await api('/api/transactions?merchantId=' + currentMerchantId + '&limit=30');
       document.getElementById('admin-d-trans').innerHTML = trans.length === 0
         ? `<div class="empty-tip">${'暂无交易'}</div>`
@@ -1597,7 +1637,7 @@ const Admin = (() => {
             <div class="mini-row">
               <span class="${t.type === 'inbound' ? 'type-inbound' : 'type-outbound'}">${t.type === 'inbound' ? '入库' : '出库'}</span>
               <span>${escapeHtml(t.product_name)}</span>
-              <span>${t.quantity} × S$${Number(t.unit_price).toFixed(2)}${Number(t.discount_amount) > 0 ? ' <span class="discount-tag">−S$' + Number(t.discount_amount).toFixed(2) + '</span>' : ''}</span>
+              <span>${t.quantity} × ${CUR}${Number(t.unit_price).toFixed(2)}${Number(t.discount_amount) > 0 ? ' <span class="discount-tag">−' + CUR + Number(t.discount_amount).toFixed(2) + '</span>' : ''}</span>
               <span>${t.verified ? '<span class="verify-ok">√</span>' : (t.type === 'inbound' ? '<span class="verify-no">×</span>' : '-')}</span>
               <span>${(t.server_timestamp || '').substring(0, 16)}</span>
             </div>`).join('')}</div>`;
@@ -1625,7 +1665,7 @@ const Admin = (() => {
         <div class="admin-discount-card">
           <div class="admin-discount-head">
             <span class="admin-discount-shop">${escapeHtml(d.merchant_name || '')}${currentUser.role === 'admin' ? ' · ' + escapeHtml(d.brand_name || '') : ''}</span>
-            <span class="chip chip-pending">${dname[d.discount_type] || d.discount_type} · S$${Number(d.discount_amount).toFixed(2)}</span>
+            <span class="chip chip-pending">${dname[d.discount_type] || d.discount_type} · ${CUR}${Number(d.discount_amount).toFixed(2)}</span>
           </div>
           <div class="admin-discount-body">
             <div class="admin-discount-meta">${escapeHtml(d.product_name)} × ${d.quantity} · ${(d.server_timestamp || '').substring(0, 16)} · ${escapeHtml(d.operator_name || '')}</div>
@@ -1634,9 +1674,9 @@ const Admin = (() => {
               ${d.discount_social_img ? `<img class="discount-img" src="${d.discount_social_img}" onclick="window.open('${d.discount_social_img}','_blank')" title="${I18n.t('discount_social_img')}">` : ''}
             </div>
             <div class="admin-discount-finance">
-              <span>${I18n.t('base_amount')}: S$${Number(d.amount_before_gst).toFixed(2)}</span>
-              <span>GST: S$${Number(d.gst_amount).toFixed(2)}</span>
-              <span>${I18n.t('total_amount')}: S$${Number(d.total_amount).toFixed(2)}</span>
+              <span>${I18n.t('base_amount')}: ${CUR}${Number(d.amount_before_gst).toFixed(2)}</span>
+              <span>GST: ${CUR}${Number(d.gst_amount).toFixed(2)}</span>
+              <span>${I18n.t('total_amount')}: ${CUR}${Number(d.total_amount).toFixed(2)}</span>
             </div>
           </div>
           <div class="admin-discount-actions">
@@ -1689,7 +1729,7 @@ const Admin = (() => {
             <div class="admin-discount-meta">${escapeHtml(p.product_name)} × ${p.quantity} · ${(p.created_at || '').substring(0, 16)}</div>
             ${p.payment_img ? `<div class="admin-discount-imgs"><img class="discount-img" src="${p.payment_img}" onclick="window.open('${p.payment_img}','_blank')" title="${I18n.t('purchase_pay_img')}"></div>` : ''}
             <div class="admin-discount-finance">
-              <span>${I18n.t('purchase_cost')}: S$${Number(p.unit_cost).toFixed(2)} × ${p.quantity} = <b>S$${Number(p.total_cost).toFixed(2)}</b></span>
+              <span>${I18n.t('purchase_cost')}: ${CUR}${Number(p.unit_cost).toFixed(2)} × ${p.quantity} = <b>${CUR}${Number(p.total_cost).toFixed(2)}</b></span>
             </div>
           </div>
           ${p.status === 'pending' ? `<div class="admin-discount-actions">
@@ -2363,7 +2403,7 @@ const Admin = (() => {
         data: {
           labels,
           datasets: [
-            { label: '营收 (S$)', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
+            { label: '营收 (' + CUR + ')', data: revenues, borderColor: '#6366f1', backgroundColor: gradient, fill: true, tension: 0.35, pointRadius: pointR, pointHoverRadius: 6, pointBackgroundColor: '#6366f1', pointBorderColor: '#fff', pointBorderWidth: 2, borderWidth: 2, yAxisID: 'y' },
             { label: '销量 (件)', data: qtys, borderColor: '#f59e0b', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: pointR > 0 ? 2 : 0, pointHoverRadius: 5, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 1.5, borderWidth: 1.5, borderDash: [4, 2], yAxisID: 'y1' }
           ]
         },
@@ -2374,7 +2414,7 @@ const Admin = (() => {
             tooltip: { backgroundColor: 'rgba(15,23,42,0.9)', titleFont: { size: 12 }, bodyFont: { size: 11 }, padding: 10, cornerRadius: 8 } },
           scales: {
             x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 15, autoSkipPadding: 10 }, grid: { display: false } },
-            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => 'S$' + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { type: 'linear', position: 'left', ticks: { font: { size: 10 }, callback: v => CUR + v }, grid: { color: 'rgba(0,0,0,0.05)' } },
             y1: { type: 'linear', position: 'right', ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }

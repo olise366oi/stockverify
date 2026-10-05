@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   // 用户名全局唯一索引（v1 登录按用户名查询的前提；数据已确认无重复）
   try { await db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)`); } catch (e) { /* 历史重复数据存在时跳过 */ }
 
-  // 财务参数表（管理端可配置；config.json 仅作缺省值）
+  // 系统参数表（管理端可配置；config.json 仅作缺省值）
   await db.run(`
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
@@ -163,16 +163,38 @@ CREATE TABLE IF NOT EXISTS audit_logs (
       updated_at TEXT DEFAULT (datetime('now','localtime'))
     )
   `);
-  // 种子默认值（与 config.json 一致；管理端修改后覆盖）
+  // ===== v0.2.0 多国化迁移：旧键（gst_rate 等）→ 通用键（tax_rate 等） =====
+  const legacyMap = {
+    gst_rate: 'tax_rate',
+    price_includes_gst: 'price_includes_tax',
+    commission_apply_gst: 'commission_apply_tax'
+  };
+  for (const [oldK, newK] of Object.entries(legacyMap)) {
+    const oldRow = await db.get('SELECT value FROM settings WHERE key = ?', oldK);
+    const newRow = await db.get('SELECT key FROM settings WHERE key = ?', newK);
+    if (oldRow && !newRow) {
+      await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', newK, oldRow.value);
+    }
+    await db.run('DELETE FROM settings WHERE key = ?', oldK);
+  }
+  // 默认参数（与 config.json 一致；管理端修改后覆盖）。新加坡 GST 只是默认演示配置之一，
+  // 产品支持多地区 / 多税制 / 多货币。
   const defaultSettings = [
-    ['gst_rate', '0.09'],
+    ['country', 'Singapore'],
+    ['currency_code', 'SGD'],
+    ['currency_symbol', 'S$'],
+    ['tax_name', 'GST'],
+    ['tax_rate', '0.09'],
+    ['price_includes_tax', '1'],
     ['platform_share_ratio', '0.7'],
     ['merchant_share_ratio', '0.3'],
     ['commission_rate', '0.03'],
-    ['commission_apply_gst', '1']
+    ['commission_tax_rate', '0.09'],
+    ['commission_apply_tax', '1'],
+    ['finance_formula_note', '不含税基数 = 售价 ÷ (1 + 税率)（售价含税时）；税额 = 不含税基数 × 税率；平台/商家分成按不含税基数 × 比例；佣金 = 不含税基数 × 佣金率；佣金附加税 = 佣金 × 税率']
   ];
   for (const [k, v] of defaultSettings) {
-    const exist = db.get('SELECT key FROM settings WHERE key = ?', k);
+    const exist = await db.get('SELECT key FROM settings WHERE key = ?', k);
     if (!exist) await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', k, v);
   }
 

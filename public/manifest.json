@@ -1,7 +1,7 @@
 {
-  "name": "StockVerify SG 新加坡零售核销与对账系统",
-  "short_name": "StockVerify SG",
-  "description": "面向新加坡零售商铺的扫码核销与 GST 对账系统：用户名密码登录、扫码出入库、离线不丢记录、GST 自动计算、7:3 分成、Excel 对账报表、操作留痕",
+  "name": "StockVerify 多国零售核销与税务对账系统",
+  "short_name": "StockVerify",
+  "description": "面向多国零售商铺的扫码核销与税务对账系统：用户名密码登录、扫码出入库、离线不丢记录、多税制多货币自动计算、平台/商家分成、Excel 对账报表、操作留痕",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

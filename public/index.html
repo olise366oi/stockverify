@@ -9,11 +9,11 @@
   <meta name="theme-color" content="#1e40af">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="StockVerify SG">
+  <meta name="apple-mobile-web-app-title" content="StockVerify">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <title>StockVerify SG · 新加坡零售核销与对账</title>
+  <title>StockVerify · 多国零售核销与税务对账</title>
   <link rel="stylesheet" href="/css/style.css?v=49">
 </head>
 <body>
@@ -31,7 +31,7 @@
       <button data-lang-btn="ms" class="lang-btn">Bahasa Melayu</button>
     </div>
     <div class="login-container">
-      <img src="/img/stockverify-logo.png" alt="StockVerify SG" class="login-brand-logo">
+      <img src="/img/stockverify-logo.png" alt="StockVerify" class="login-brand-logo">
       <h1 class="login-title" data-i18n="login_title">Hello, my friend!</h1>
 
       <div class="login-form">
@@ -51,7 +51,7 @@
         </div>
         <button id="btn-login" class="btn btn-primary btn-block" data-i18n="login_btn">登录系统</button>
       </div>
-      <p class="login-footer">© StockVerify SG · 新加坡零售核销与对账系统 · GST 9%</p>
+      <p class="login-footer">© StockVerify · 多国零售核销与税务对账系统 · <span id="login-config-info">Singapore · SGD · GST 9% · 售价含税</span></p>
     </div>
   </div>
 
@@ -187,7 +187,7 @@
               <input type="number" id="confirm-quantity" value="1" min="1">
             </div>
             <div class="form-group">
-              <label data-i18n="fixed_price_label">标价 (SGD)</label>
+              <label data-i18n="fixed_price_label">标价</label>
               <input type="number" id="confirm-price" value="0" step="0.01" min="0" readonly>
             </div>
             <!-- 活动折扣（仅出库销售） -->
@@ -298,11 +298,11 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label data-i18n="cost_price">进价 (SGD)</label>
+              <label data-i18n="cost_price">进价</label>
               <input type="number" id="pm-cost" value="0" step="0.01" min="0">
             </div>
             <div class="form-group">
-              <label data-i18n="sell_price">售价 (SGD)</label>
+              <label data-i18n="sell_price">售价</label>
               <input type="number" id="pm-price" value="0" step="0.01" min="0">
             </div>
           </div>
@@ -378,6 +378,9 @@
         </div>
 
         <div id="report-summary" class="section-card hidden">
+          <div class="report-summary-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span class="hint" id="report-config-info"></span>
+          </div>
           <h3 data-i18n="summary">汇总统</h3>
           <div class="report-summary-grid">
             <div><span class="rs-label" data-i18n="trans_count">交易笔数</span><span class="rs-value" id="rs-count">0</span></div>
@@ -550,7 +553,7 @@
         </div>
         <div class="section-card">
           <h3 data-i18n="sys_info">系统信息</h3>
-          <p>StockVerify SG · v0.1.1</p>
+          <p>StockVerify · v0.2.0</p>
           <p data-i18n="offline_storage">离线存储: IndexedDB</p>
           <p data-i18n="gst_rate">GST: 销售额 9%</p>
           <p>财务口径: 售价含 GST（不含税基数 = 售价 ÷ 1.09）</p>
@@ -569,7 +572,7 @@
 
     <!-- 底部导航（合作商家） -->
     <nav class="bottom-nav" id="bottom-nav"></nav>
-    <footer class="app-footer">StockVerify SG · 新加坡零售核销与对账系统</footer>
+    <footer class="app-footer">StockVerify · 多国零售核销与税务对账系统</footer>
   </div>
 
   <!-- 修改密码弹窗 -->
