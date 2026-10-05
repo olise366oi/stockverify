@@ -1,0 +1,17 @@
+{
+  "gst": {
+    "rate": 0.09,
+    "priceIncludesGst": true
+  },
+  "split": {
+    "platform": 0.7,
+    "merchant": 0.3
+  },
+  "commission": {
+    "rate": 0.03,
+    "applyGst": true
+  },
+  "scan": {
+    "duplicateWindowMs": 5000
+  }
+}

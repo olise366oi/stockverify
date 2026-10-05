@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StockVerify SG">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>StockVerify SG · 新加坡零售核销与对账</title>
+  <link rel="stylesheet" href="/css/style.css?v=49">
+</head>
+<body>
+  <!-- 离线提示区-->
+  <div id="offline-bar" class="offline-bar hidden">
+    <span id="offline-text">网络已断开，扫码记录将保存在本地</span>
+    <span id="pending-count" class="pending-badge hidden">有<b id="pending-num">0</b> 条待上传</span>
+  </div>
+
+  <!-- 登录页（合作商家专属页-->
+  <div id="page-login" class="page active">
+    <div class="login-lang">
+      <button data-lang-btn="zh" class="lang-btn active">简体中文</button>
+      <button data-lang-btn="en" class="lang-btn">English</button>
+      <button data-lang-btn="ms" class="lang-btn">Bahasa Melayu</button>
+    </div>
+    <div class="login-container">
+      <img src="/img/stockverify-logo.png" alt="StockVerify SG" class="login-brand-logo">
+      <h1 class="login-title" data-i18n="login_title">Hello, my friend!</h1>
+
+      <div class="login-form">
+        <div class="form-group">
+          <label data-i18n="username">用户名</label>
+          <input type="text" id="login-username" data-i18n="username_ph" placeholder="请输入用户名" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label data-i18n="password">密码</label>
+          <div class="password-wrap">
+            <input type="password" id="login-password" data-i18n="password_ph" placeholder="请输入密码" autocomplete="off">
+            <button type="button" class="eye-btn" id="btn-eye-password" title="显示密码1秒">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <small data-i18n="password_hint">请输入用户名和密码以继续</small>
+        </div>
+        <button id="btn-login" class="btn btn-primary btn-block" data-i18n="login_btn">登录系统</button>
+      </div>
+      <p class="login-footer">© StockVerify SG · 新加坡零售核销与对账系统 · GST 9%</p>
+    </div>
+  </div>
+
+  <!-- 主应用-->
+  <div id="page-app" class="page">
+    <!-- 顶部导航 -->
+    <header class="app-header">
+      <div class="header-left">
+        <span id="header-shop-name">我的店铺</span>
+        <span id="header-user-name" class="role-badge">--</span>
+        <span id="header-user-role" class="role-badge">店员</span>
+      </div>
+      <div class="header-right">
+        <div class="header-lang">
+          <button data-lang-btn="zh" class="lang-btn active">简</button>
+          <button data-lang-btn="en" class="lang-btn">EN</button>
+          <button data-lang-btn="ms" class="lang-btn">MS</button>
+        </div>
+        <button id="btn-logout" class="btn-icon" title="退出登录">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 内容区-->
+    <main class="app-content" id="app-content">
+      <!-- 仪表盘视图-->
+      <section id="view-dashboard" class="view active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">待入库</div>
+            <div class="stat-value" id="stat-products">0</div>
+          </div>
+          <div class="stat-card stat-warning">
+            <div class="stat-label" data-i18n="stat_low_stock">库存预警</div>
+            <div class="stat-value" id="stat-low-stock">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label" data-i18n="stat_sales">今日销售额</div>
+            <div class="stat-value" id="stat-sales">$0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label" data-i18n="stat_gst">今日GST</div>
+            <div class="stat-value" id="stat-gst">$0</div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>销售趋势</h3>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+            <select id="dashboard-trend-product" style="padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg);" onchange="App.loadSalesTrend(document.querySelector('#dashboard-trend-chart').closest('.section-card').querySelector('.trend-btn.active').dataset.period,'dashboard-trend-chart')">
+              <option value="">全部商品</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="btn btn-secondary trend-btn" data-period="today" onclick="App.loadSalesTrend('today','dashboard-trend-chart')">本日</button>
+            <button class="btn btn-secondary trend-btn" data-period="week" onclick="App.loadSalesTrend('week','dashboard-trend-chart')">本周</button>
+            <button class="btn btn-secondary trend-btn active" data-period="month" onclick="App.loadSalesTrend('month','dashboard-trend-chart')">本月</button>
+            <button class="btn btn-secondary trend-btn" data-period="month_all" onclick="App.loadSalesTrend('month_all','dashboard-trend-chart')">每月</button>
+            <button class="btn btn-secondary trend-btn" data-period="quarter" onclick="App.loadSalesTrend('quarter','dashboard-trend-chart')">每季度</button>
+            <button class="btn btn-secondary trend-btn" data-period="year_all" onclick="App.loadSalesTrend('year_all','dashboard-trend-chart')">每年</button>
+          </div>
+          <div style="position:relative;height:240px;">
+            <canvas id="dashboard-trend-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3 data-i18n="quick_actions">快捷操作</h3>
+          <div class="quick-actions">
+            <button class="quick-btn quick-in" onclick="App.navigate('scan-inbound')">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              <span data-i18n="inbound_scan">入库扫码</span>
+            </button>
+            <button class="quick-btn quick-out" onclick="App.navigate('scan-outbound')">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+              <span data-i18n="outbound_scan">出库扫码</span>
+            </button>
+            <button class="quick-btn quick-product" onclick="App.navigate('products')">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              <span data-i18n="product_mgmt">商品管理</span>
+            </button>
+            <button class="quick-btn quick-report" onclick="App.navigate('reports')">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span data-i18n="report_export">报表导出</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 扫码视图（入�?出库共用-->
+      <section id="view-scan" class="view">
+        <div class="scan-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 id="scan-title">扫码入库</h2>
+        </div>
+
+        <div class="scanner-container">
+          <div id="scanner-reader" class="scanner-reader">
+            <div class="scanner-placeholder">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="1.5">
+                <path d="M4 7V5a1 1 0 011-1h2M17 4h2a1 1 0 011 1v2M20 17v2a1 1 0 01-1 1h-2M7 20H5a1 1 0 01-1-1v-2M4 12h16M9 7v10M15 7v10"/>
+              </svg>
+              <p id="scan-placeholder-text" data-i18n="start_camera">点击下方按钮启动摄像头扫码</p>
+            </div>
+          </div>
+          <div class="scan-actions">
+            <button id="btn-start-scan" class="btn btn-primary btn-block" data-i18n="start_camera">启动摄像头</button>
+            <button id="btn-capture-scan" class="btn btn-success btn-block hidden">拍照识别</button>
+            <button id="btn-stop-scan" class="btn btn-secondary btn-block hidden" data-i18n="stop_camera">停止扫码</button>
+          </div>
+          <div class="manual-input">
+            <p data-i18n="manual_barcode">或手动输入条码：</p>
+            <div class="input-row">
+              <input type="text" id="manual-barcode" placeholder="输入商品条码">
+              <button id="btn-manual-scan" class="btn btn-primary">OK</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 扫码结果确认 -->
+        <div id="scan-confirm" class="scan-confirm hidden">
+          <div class="confirm-card">
+            <h3 id="confirm-product-name">商品名称</h3>
+            <p class="confirm-barcode">条码: <span id="confirm-barcode"></span></p>
+            <p class="confirm-stock">当前库存: <span id="confirm-stock">0</span></p>
+            <div class="form-group">
+              <label id="confirm-qty-label">入库数量</label>
+              <input type="number" id="confirm-quantity" value="1" min="1">
+            </div>
+            <div class="form-group">
+              <label data-i18n="fixed_price_label">标价 (SGD)</label>
+              <input type="number" id="confirm-price" value="0" step="0.01" min="0" readonly>
+            </div>
+            <!-- 活动折扣（仅出库销售） -->
+            <div id="discount-section" class="discount-section hidden">
+              <div class="form-group">
+                <label data-i18n="discount_label">活动折扣（与中医馆合作 · 品牌活动</label>
+                <select id="confirm-discount">
+                  <option value="none" data-i18n="discount_none">无折</option>
+                  <option value="medical" data-i18n="discount_medical">中医馆消费凭证−S$10</option>
+                  <option value="social" data-i18n="discount_social">社媒分享截图 −S$10</option>
+                  <option value="both" data-i18n="discount_both">两项都满足−S$20</option>
+                </select>
+                <small class="fixed-hint" data-i18n="discount_hint">折扣从品牌分成中扣除 · GST 按折后金额计</small>
+              </div>
+              <div id="discount-uploads">
+                <div id="discount-medical-box" class="upload-box hidden">
+                  <label data-i18n="discount_medical_img">�?中医馆消费凭证图</label>
+                  <div class="upload-zone" onclick="App.clickUpload('medical')">
+                    <input type="file" id="discount-medical-input" accept="image/*" class="hidden" onchange="App.handleUploadFile('medical', this)">
+                    <span id="discount-medical-name" data-i18n="tap_to_upload">点击上传图片</span>
+                  </div>
+                  <img id="discount-medical-preview" class="upload-preview hidden" alt="">
+                </div>
+                <div id="discount-social-box" class="upload-box hidden">
+                  <label data-i18n="discount_social_img">�?社媒分享截图</label>
+                  <div class="upload-zone" onclick="App.clickUpload('social')">
+                    <input type="file" id="discount-social-input" accept="image/*" class="hidden" onchange="App.handleUploadFile('social', this)">
+                    <span id="discount-social-name" data-i18n="tap_to_upload">点击上传图片</span>
+                  </div>
+                  <img id="discount-social-preview" class="upload-preview hidden" alt="">
+                </div>
+              </div>
+            </div>
+            <div id="confirm-finance" class="finance-preview">
+              <div class="finance-row"><span data-i18n="base_amount">不含税基</span><span id="fin-base">$0.00</span></div>
+              <div class="finance-row" id="fin-discount-row"><span data-i18n="discount_amount">活动折扣</span><span id="fin-discount">-$0.00</span></div>
+              <div class="finance-row"><span data-i18n="gst_amount">GST</span><span id="fin-gst">$0.00</span></div>
+              <div class="finance-row finance-total"><span data-i18n="total_amount">含税总额</span><span id="fin-total">$0.00</span></div>
+            </div>
+            <div class="confirm-actions">
+              <button id="btn-confirm-cancel" class="btn btn-secondary" data-i18n="cancel">取消</button>
+              <button id="btn-confirm-submit" class="btn btn-primary" data-i18n="confirm">确认提交</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 扫码结果提示（√/×-->
+        <div id="scan-result" class="scan-result hidden">
+          <div id="result-icon" class="result-icon"></div>
+          <h3 id="result-title">操作成功</h3>
+          <p id="result-message">库存已更</p>
+          <button class="btn btn-primary" onclick="App.resetScan()" data-i18n="continue_scan">继续扫码</button>
+        </div>
+
+        <!-- 旧版扫码成功提示（兼容） -->
+        <div id="scan-success" class="scan-success hidden">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          </div>
+          <h3 data-i18n="scan_success">操作成功</h3>
+          <p id="success-message">库存已更</p>
+          <button class="btn btn-primary" onclick="App.resetScan()" data-i18n="continue_scan">继续扫码</button>
+        </div>
+      </section>
+
+      <!-- 商品管理视图 -->
+      <section id="view-products" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="products_title">商品管理</h2>
+          <button id="btn-add-product" class="btn-add" title="添加商品">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+
+        <div class="search-bar">
+          <input type="text" id="product-search" placeholder="搜索商品名称/条码/SKU">
+          <select id="product-filter">
+            <option value="all" data-i18n="all">全部</option>
+            <option value="low" data-i18n="only_low">仅低库存</option>
+          </select>
+        </div>
+
+        <div id="product-list" class="product-list"></div>
+      </section>
+
+      <!-- 商品编辑弹窗 -->
+      <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+          <h3 id="modal-title">添加商品</h3>
+          <div class="form-group">
+            <label data-i18n="product_name">商品名称 *</label>
+            <input type="text" id="pm-name" placeholder="例如 珍珠手链">
+          </div>
+          <div class="form-group">
+            <label data-i18n="barcode">条码 *</label>
+            <input type="text" id="pm-barcode" placeholder="商品二维�?条码内容">
+          </div>
+          <div class="form-group">
+            <label data-i18n="sku">SKU</label>
+            <input type="text" id="pm-sku" placeholder="可�?>
+          </div>
+          <div class="form-group">
+            <label data-i18n="category">分类</label>
+            <input type="text" id="pm-category" placeholder="例如 珠宝" value="未分�?>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="cost_price">进价 (SGD)</label>
+              <input type="number" id="pm-cost" value="0" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label data-i18n="sell_price">售价 (SGD)</label>
+              <input type="number" id="pm-price" value="0" step="0.01" min="0">
+            </div>
+          </div>
+          <small class="fixed-hint" data-i18n="fixed_price_hint">标价按商品档案设置，商家可维护</small>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="initial_stock">初始库存</label>
+              <input type="number" id="pm-stock" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label data-i18n="threshold">预警阈</label>
+              <input type="number" id="pm-threshold" value="10" min="0">
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button id="pm-cancel" class="btn btn-secondary" data-i18n="cancel">取消</button>
+            <button id="pm-save" class="btn btn-primary" data-i18n="save">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 报表视图 -->
+      <section id="view-reports" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="reports_title">对账报表</h2>
+        </div>
+
+        <div class="section-card">
+          <h3>销售趋势</h3>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+            <select id="report-trend-product" style="padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg);" onchange="App.loadSalesTrend(document.querySelector('#sales-trend-chart').closest('.section-card').querySelector('.trend-btn.active').dataset.period,'sales-trend-chart')">
+              <option value="">全部商品</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="btn btn-secondary trend-btn" data-period="today" onclick="App.loadSalesTrend('today','sales-trend-chart')">本日</button>
+            <button class="btn btn-secondary trend-btn" data-period="week" onclick="App.loadSalesTrend('week','sales-trend-chart')">本周</button>
+            <button class="btn btn-secondary trend-btn active" data-period="month" onclick="App.loadSalesTrend('month','sales-trend-chart')">本月</button>
+            <button class="btn btn-secondary trend-btn" data-period="month_all" onclick="App.loadSalesTrend('month_all','sales-trend-chart')">每月</button>
+            <button class="btn btn-secondary trend-btn" data-period="quarter" onclick="App.loadSalesTrend('quarter','sales-trend-chart')">每季度</button>
+            <button class="btn btn-secondary trend-btn" data-period="year_all" onclick="App.loadSalesTrend('year_all','sales-trend-chart')">每年</button>
+          </div>
+          <div style="position:relative;height:280px;">
+            <canvas id="sales-trend-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3 data-i18n="filter_cond">筛选条</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="start_date">开始日</label>
+              <input type="date" id="report-start">
+            </div>
+            <div class="form-group">
+              <label data-i18n="end_date">结束日期</label>
+              <input type="date" id="report-end">
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="trans_type">交易类型</label>
+            <select id="report-type">
+              <option value="all" data-i18n="all_types">全部</option>
+              <option value="outbound" data-i18n="only_out">仅出库（销售）</option>
+              <option value="inbound" data-i18n="only_in">仅入</option>
+            </select>
+          </div>
+          <button id="btn-generate-report" class="btn btn-primary btn-block" data-i18n="gen_report">生成报表</button>
+          <button id="btn-export-excel" class="btn btn-success btn-block hidden" data-i18n="export_excel">导出 Excel</button>
+        </div>
+
+        <div id="report-summary" class="section-card hidden">
+          <h3 data-i18n="summary">汇总统</h3>
+          <div class="report-summary-grid">
+            <div><span class="rs-label" data-i18n="trans_count">交易笔数</span><span class="rs-value" id="rs-count">0</span></div>
+            <div><span class="rs-label" data-i18n="total_before_gst">不含税总额</span><span class="rs-value" id="rs-base">$0</span></div>
+            <div><span class="rs-label" data-i18n="total_gst">GST总额</span><span class="rs-value" id="rs-gst">$0</span></div>
+            <div><span class="rs-label" data-i18n="total_inc_gst">含税总额</span><span class="rs-value" id="rs-total">$0</span></div>
+            <div><span class="rs-label">入库数量</span><span class="rs-value" id="rs-inbound-qty">0</span></div>
+            <div><span class="rs-label">出库数量</span><span class="rs-value" id="rs-outbound-qty">0</span></div>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <h4 style="margin:0 0 10px;font-size:14px;color:var(--text);">分成明细</h4>
+            <div class="report-summary-grid">
+              <div><span class="rs-label">销售件</span><span class="rs-value" id="rs-sales-qty">0</span></div>
+              <div><span class="rs-label">成本总额</span><span class="rs-value" id="rs-cost">$0</span></div>
+              <div><span class="rs-label">折扣总额</span><span class="rs-value" id="rs-discount">$0</span></div>
+              <div><span class="rs-label">品牌方分</span><span class="rs-value" id="rs-brand-share">$0</span></div>
+              <div><span class="rs-label">商铺分成</span><span class="rs-value" id="rs-merchant-share">$0</span></div>
+              <div><span class="rs-label">回款品牌方GST</span><span class="rs-value" id="rs-brand-gst">$0</span></div>
+              <div><span class="rs-label">商铺自交GST</span><span class="rs-value" id="rs-merchant-gst">$0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="report-daily-container" class="section-card hidden">
+          <h3>每日流水汇</h3>
+          <div class="table-scroll">
+            <table id="report-daily-table" class="report-table">
+              <thead>
+                <tr>
+                  <th>日期</th><th>销售件数</th><th>折扣</th><th>不含税</th><th>GST</th><th>含税总额</th><th>品牌分成</th><th>商铺分成</th>
+                </tr>
+              </thead>
+              <tbody id="report-daily-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="report-table-container" class="section-card hidden">
+          <h3 data-i18n="details">交易明细</h3>
+          <div class="table-scroll">
+            <table id="report-table" class="report-table">
+              <thead>
+                <tr>
+                  <th data-i18n="time">时间</th><th data-i18n="type">类型</th><th data-i18n="product_name">商品</th><th data-i18n="qty">数量</th><th data-i18n="unit_price">单价</th>
+                  <th data-i18n="discount_amount">折扣</th><th data-i18n="base_amount">不含税基数</th><th data-i18n="gst_amount">GST</th><th data-i18n="total_amount">含税总额</th><th>品牌分成</th><th>商铺分成</th><th data-i18n="status">核对</th><th data-i18n="operator">操作人</th>
+                </tr>
+              </thead>
+              <tbody id="report-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 进货申请视图（合作商家向品牌进货-->
+      <section id="view-purchase" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="purchase_title">进货申请</h2>
+        </div>
+        <div class="section-card">
+          <div class="form-group">
+            <label data-i18n="purchase_product">选择商品</label>
+            <select id="purchase-product">
+              <option value="" data-i18n="purchase_sel_ph">请选择要进货的商品</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="purchase_qty">进货数量</label>
+            <input type="number" id="purchase-qty" value="1" min="1" max="9999">
+            <small class="fixed-hint" data-i18n="purchase_cost_hint">品牌供货价 S$20 / 个（品牌链路业务规则）</small>
+          </div>
+          <div class="form-group">
+            <label data-i18n="purchase_pay_img">付款截图凭证</label>
+            <div class="upload-zone" onclick="App.clickPurchaseUpload()">
+              <input type="file" id="purchase-pay-input" accept="image/*" class="hidden" onchange="App.handlePurchaseUpload(this)">
+              <span id="purchase-pay-name" data-i18n="tap_to_upload">点击上传图片</span>
+            </div>
+            <img id="purchase-pay-preview" class="upload-preview hidden" alt="">
+          </div>
+          <div class="finance-row finance-total"><span data-i18n="purchase_total">进货合计</span><span id="purchase-total">S$20.00</span></div>
+          <button class="btn btn-primary btn-block" onclick="App.submitPurchase()" data-i18n="purchase_submit">提交进货申请</button>
+        </div>
+        <div class="section-card">
+          <h3 data-i18n="purchase_history">进货记录</h3>
+          <div id="purchase-list"></div>
+        </div>
+      </section>
+
+      <!-- 操作日志视图 -->
+      <section id="view-logs" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="logs_title">操作日志</h2>
+          <button id="btn-verify-logs" class="btn-verify" title="验证日志完整�?>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </button>
+        </div>
+        <div id="log-list" class="log-list"></div>
+      </section>
+
+      <!-- 员工管理视图 -->
+      <section id="view-staff" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="staff_title">员工管理</h2>
+        </div>
+        <div id="staff-list" class="staff-list"></div>
+      </section>
+
+      <!-- 发货单视图（合作商家查看收货进度，条码不提前暴露-->
+      <section id="view-shipments" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="shipments_title">发货管理</h2>
+          <span class="chip chip-pending dev-chip" data-i18n="dev_badge">开发中</span>
+        </div>
+        <div class="dev-banner">
+          <span class="chip chip-pending" data-i18n="dev_badge">开发中</span>
+          <span data-i18n="dev_ship_hint">滞销清货 · 独立站快递/自提 功能开发中，敬请期待</span>
+        </div>
+        <div id="shipment-list" class="shipment-list"></div>
+      </section>
+
+      <!-- 发货单详情（商家端仅显示收货进度-->
+      <section id="view-shipment-detail" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('shipments')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 id="shipment-detail-title">发货</h2>
+        </div>
+        <div id="shipment-detail" class="shipment-detail"></div>
+      </section>
+
+      <!-- 设置视图 -->
+      <section id="view-settings" class="view">
+        <div class="view-header">
+          <button class="btn-back" onclick="App.navigate('dashboard')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 data-i18n="settings_title">店铺设置</h2>
+        </div>
+        <div class="section-card">
+          <div class="form-group">
+            <label data-i18n="shop_name">店铺名称</label>
+            <input type="text" id="setting-shop-name" readonly>
+            <div class="fixed-hint" data-i18n="shop_name_fixed_hint">店铺名称由品牌方开户时固定，商家不可修改</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="account">当前账号</label>
+            <input type="text" id="setting-account" readonly>
+          </div>
+          <div class="form-group">
+            <label data-i18n="gst_rate">GST税率</label>
+            <input type="number" id="setting-gst-rate" readonly>
+            <div class="fixed-hint" data-i18n="gst_fixed_hint">由品牌方开户时按国家确定，商家不可修改</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="country_label">所在国家/地区</label>
+            <input type="text" id="setting-country" readonly>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3 data-i18n="sys_info">系统信息</h3>
+          <p>StockVerify SG · v0.1.1</p>
+          <p data-i18n="offline_storage">离线存储: IndexedDB</p>
+          <p data-i18n="gst_rate">GST: 销售额 9%</p>
+          <p>财务口径: 售价含 GST（不含税基数 = 售价 ÷ 1.09）</p>
+          <p>安全: 全站HTTPS / JWT认证 / 日志哈希</p>
+        </div>
+        <div class="section-card">
+          <h3 data-i18n="more">更多功能</h3>
+          <div class="settings-links">
+            <button id="btn-change-password" class="btn btn-secondary btn-block" data-i18n="change_password">修改密码</button>
+            <button id="btn-go-logs" class="btn btn-secondary btn-block" onclick="App.navigate('logs')" data-i18n="logs_title">操作日志</button>
+            <button id="btn-go-staff" class="btn btn-secondary btn-block" onclick="App.navigate('staff')" data-i18n="staff_title">员工管理</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航（合作商家） -->
+    <nav class="bottom-nav" id="bottom-nav"></nav>
+    <footer class="app-footer">StockVerify SG · 新加坡零售核销与对账系统</footer>
+  </div>
+
+  <!-- 修改密码弹窗 -->
+  <div id="password-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="change_password">修改密码</h3>
+      <div class="form-group">
+        <label data-i18n="new_password">新密</label>
+        <input type="password" id="pwd-new" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label data-i18n="confirm_password">确认新密</label>
+        <input type="password" id="pwd-confirm" autocomplete="new-password">
+      </div>
+      <div class="fixed-hint" data-i18n="password_rule">至少8位，须含大写字母、小写字母和数字</div>
+      <div class="fixed-hint" style="color:#dc2626;font-weight:600;" data-i18n="password_one_time">注意：密码仅可修改一次，请妥善保</div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="App.closePasswordModal()">取消</button>
+        <button class="btn btn-primary" id="pwd-submit" data-i18n="change_password">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- 库依-->
+  <script src="/js/vendor/html5-qrcode.min.js?v=43"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- 应用脚本 -->
+  <script src="/js/i18n.js?v=43"></script>
+  <script src="/js/db.js?v=43"></script>
+  <script src="/js/finance.js?v=43"></script>
+  <script src="/js/scanner.js?v=43"></script>
+  <script src="/js/sync.js?v=43"></script>
+  <script src="/js/export.js?v=43"></script>
+  <script src="/js/app.js?v=49"></script>
+</body>
+</html>

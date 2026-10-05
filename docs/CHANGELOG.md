@@ -1,0 +1,56 @@
+# CHANGELOG
+
+## v0.2.0（2026-10-05）— 账号体系与参数管理端化
+
+### 新增
+
+- 登录改为**用户名 + 密码**（bcrypt 哈希存储于 `users.password_hash`，10 轮盐）：`/api/v1/login` 只收 `{ username, password, role? }`，登录页与管理端登录页均为「用户名 + 密码」两输入框，头部显示店铺名 + 当前账号；原登录链路保留不动。
+- 初始账号：4 家合作商铺（`orchard_owner` / `jurong_owner` / `tampines_owner` / `suntec_owner`）+ 管理端 `admin_01` + 品牌方 `brand_01`，见 `docs/INIT.md`。
+- 管理端**商品管理**：新增 / 编辑 / 上架 / 下架商品，字段含 SKU、名称、分类、售价、成本价、库存、状态；后端新增 `/api/v1/admin/products` 增删改接口（需管理端权限）。
+- 管理端**财务设置**页：GST 税率、平台/商家分成比例、佣金率、佣金附加 GST 开关，写入新建 `settings` 表（key-value）；`finance.js` 改为从数据库读参数，`config.json` 仅作默认值。
+- 开户链路：品牌 / 商家 / 管理端新开账号时即创建用户并写入 bcrypt 初始密码（初始密码 = 开户密钥），新账号可直接用用户名 + 密码登录。
+- GitHub 本地化：`.gitignore`、`.env.example`、`server.js` 读取 `process.env.PORT`、数据库路径读取 `process.env.DATABASE_PATH`。
+
+### 变更
+
+- 财务参数由「config.json 写死」改为「管理端可配置（settings 表优先，config.json 兜底）」；原有交易算法（读 `shops` 表店铺级参数）不受影响。
+- `users` 表新增 `password_hash` 列与用户名唯一索引；`product_catalog` 表新增 `sku`、`category` 列；`shops` 表相关注册接口审计文案更新。
+- 全局清理「卡密 / demo / 演示 / 阶段 / 豆包」字样（UI、i18n、manifest、README、docs）；原登录接口功能与鉴权逻辑保持不变。
+- README「测试卡密见部署说明」→「初始账号见 docs/INIT.md」。
+
+## v0.1.1（2026-10-05）— 商业化改造
+
+品牌统一为 **StockVerify SG**（面向新加坡零售商铺的扫码核销与 GST 对账系统），仅改命名、数据与包装，业务逻辑不变。
+
+### 新增
+
+- `routes-v1.js`：API v1 接口模块（`/api/v1/*`），含 hello / login / products / scan/in / scan/out / sync / logs / export/excel / config，服务端 5 秒防重 + clientRecordId 判重 + 设备信息写日志。
+- `config.json`：全部配置外置（GST 9% 售价含 GST、7:3 分成、佣金 3% + 附加 GST、防重窗口 5000ms）。
+- `finance.js`：财务计算模块，从配置文件读参数。
+- `public/offline.html`：离线提示页（Service Worker 断网回退）。
+- 合作商铺数据：Orchard Central / Jurong Point / Tampines Mall / Suntec City 四店开户密钥与 36 个新加坡零售品类商品。
+
+### 变更
+
+- 品牌重命名：`package.json` → `stockverify-sg`；manifest、页面 title、i18n 文案、字标（`img/stockverify-logo.png`）全部更新为 StockVerify SG。
+- 接口路径：旧前缀接口统一为 `/api/v1/*`（路由文件更名为 `routes-v1.js`），功能与返回不变。
+- 开户密钥格式：`SV-SG-XXXX-XXXX`（4 段大写字母+数字），原密钥全部替换。
+- 数据真实化：店铺中性化改名、商品替换为新加坡零售品类（药品/食品/日用品，S$2.5–28，真实 SKU）、商品模板与一物一码实例名称同步。
+- 售价/成本改为读取商品档案（`products.sell_price` / `cost_price`），商品新增/编辑接口接受售价字段。
+- 库存列表 API（`/api/merchant/catalog-summary`）返回真实售价。
+- 日志哈希链公式统一（追加与校验一致），历史日志按统一公式重算，`/api/logs/verify` 校验通过。
+- 文档：README 重写为产品文档；`docs/项目现状.md` 同步更新。
+
+### 修复
+
+- 审计日志哈希链校验失败问题（追加公式含时间戳、校验公式不含，二者不一致导致历史数据校验失败）：统一为 `sha256(店铺|用户|动作|目标|备注|上一哈希)`。
+
+## v0.1.0（2026-10-05）— 系统初始版本
+
+基于原系统能力整理的首个正式版本基线：
+
+- 登录（JWT）、扫码入库/出库、离线模式（IndexedDB + Service Worker + window online 补传，兼容 iOS Safari）、GST 自动计算、7:3 分成、前端 Excel 导出、操作日志（哈希链）、商品管理、角色权限、多店铺隔离、品牌方发货/进货/折扣审核链路。
+- 前端 PWA：manifest（standalone）+ Service Worker 应用外壳缓存 + 离线提示。
+- 数据库：SQLite 12 张表（shops / users / products / transactions / audit_logs / purchase_orders / shipments / shipment_items / product_catalog / product_catalog_auth / product_catalog_region / product_items）。
+
+> 数据备份：`backup-phase1`（v0.1.0 前逐文件）、`backup-phase1.5`（v0.1.1 前全量）、`backup-phase1.6`（v0.2.0 前全量）。

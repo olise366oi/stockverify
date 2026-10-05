@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>StockVerify SG · 品牌管理</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/style.css?v=43">
+</head>
+<body class="admin-body">
+  <!-- 登录页（品牌方 / 管理端） -->
+  <div id="admin-login" class="admin-page active">
+    <div style="position:absolute;top:14px;right:16px;display:flex;gap:2px;">
+      <button data-lang-btn="zh" class="lang-btn active" style="background:none;border:none;color:#cbd5e1;font-size:12px;padding:4px 8px;cursor:pointer;">简体中</button>
+      <button data-lang-btn="en" class="lang-btn" style="background:none;border:none;color:#cbd5e1;font-size:12px;padding:4px 8px;cursor:pointer;">English</button>
+      <button data-lang-btn="ms" class="lang-btn" style="background:none;border:none;color:#cbd5e1;font-size:12px;padding:4px 8px;cursor:pointer;">Bahasa Melayu</button>
+    </div>
+    <div class="admin-login-box">
+      <img src="/img/stockverify-logo.png" alt="StockVerify SG" class="admin-brand-logo">
+      <h1 class="admin-login-title" data-i18n="login_title">Hello, my friend!</h1>
+
+      <div class="admin-role-switch">
+        <button id="admin-role-brand" class="admin-role-btn" onclick="Admin.setRole('brand')" data-i18n="admin_role_brand">品牌</button>
+        <button id="admin-role-admin" class="admin-role-btn" onclick="Admin.setRole('admin')" data-i18n="admin_role_admin">管理</button>
+      </div>
+
+      <div class="admin-login-form">
+        <div class="form-group">
+          <label data-i18n="username">用户名</label>
+          <input type="text" id="admin-login-username" data-i18n="username_ph" placeholder="请输入用户名" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label data-i18n="password">密码</label>
+          <div class="password-wrap">
+            <input type="password" id="admin-login-password" data-i18n="password_ph" placeholder="请输入密码" autocomplete="off">
+            <button type="button" class="eye-btn" id="admin-btn-eye-password" title="显示密码1秒">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <small data-i18n="password_hint">请输入用户名和密码以继续</small>
+        </div>
+        <button id="admin-btn-login" class="btn btn-primary btn-block" data-i18n="login_btn">登录系统</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主应-->
+  <div id="admin-app" class="admin-page">
+    <header class="admin-header">
+      <div class="admin-header-left">
+        <img src="/img/stockverify-logo.png" alt="StockVerify SG" class="admin-header-logo">
+        <div>
+          <div class="admin-header-title" data-i18n="admin_title">StockVerify SG 品牌管理</div>
+          <div class="admin-header-sub" id="admin-header-sub"></div>
+        </div>
+      </div>
+      <div class="admin-header-right">
+        <button data-lang-btn="zh" class="lang-btn active">简</button>
+        <button data-lang-btn="en" class="lang-btn">EN</button>
+        <button data-lang-btn="ms" class="lang-btn">MS</button>
+        <button id="admin-btn-change-pwd" class="admin-logout" style="margin-right:8px;">修改密码</button>
+        <button id="admin-btn-logout" class="admin-logout" data-i18n="admin_logout">退出登</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <!-- 品牌方列表（管理端） -->
+      <section id="admin-view-brands" class="admin-view">
+        <div class="admin-view-head">
+          <h2 data-i18n="admin_brands">品牌方列表</h2>
+          <button id="admin-btn-register-brand" class="btn-admin-add" data-i18n="admin_register_brand">注册品牌</button>
+        </div>
+        <div id="admin-brand-list"></div>
+      </section>
+
+      <!-- 总代详情（管理端查看代理/商铺/地区销售） -->
+      <section id="admin-view-brand-detail" class="admin-view">
+        <div class="admin-view-head">
+          <button class="btn-admin-back" onclick="Admin.backToBrands()" data-i18n="admin_back_brands">返回品牌列表</button>
+          <h2 id="admin-brand-detail-title">总代详情</h2>
+        </div>
+        <div id="admin-brand-detail"></div>
+      </section>
+
+      <!-- 销售趋势详情页（从授权链路点击销售情况跳转） -->
+      <section id="admin-view-sales-detail" class="admin-view">
+        <div class="admin-view-head">
+          <button class="btn-admin-back" onclick="Admin.backFromSalesDetail()">返回</button>
+          <h2 id="admin-sales-detail-title">销售趋势</h2>
+        </div>
+        <div id="admin-sales-detail"></div>
+      </section>
+
+      <!-- 商品库（超管上新+授权，总代授权给代理） -->
+      <section id="admin-view-catalog" class="admin-view">
+        <div class="admin-view-head">
+          <h2 id="admin-catalog-title">商品</h2>
+          <button id="admin-btn-catalog-add" class="btn-admin-add">上新商品</button>
+        </div>
+        <div id="admin-catalog-list"></div>
+      </section>
+
+      <!-- 商品编辑页（上新/编辑/宣传图/地区宣传） -->
+      <section id="admin-view-catalog-edit" class="admin-view">
+        <div class="admin-view-head">
+          <button class="btn-admin-back" onclick="Admin.backToCatalog()">返回商品列表</button>
+          <h2 id="admin-catalog-edit-title">商品详情</h2>
+        </div>
+        <div id="admin-catalog-edit-content"></div>
+      </section>
+
+      <!-- 财务设置（管理端可配置 GST / 分成 / 佣金） -->
+      <section id="admin-view-settings" class="admin-view">
+        <div class="admin-view-head">
+          <h2>财务设置</h2>
+        </div>
+        <div id="admin-settings-content"></div>
+      </section>
+
+      <!-- 合作商家列表（品牌方 / 管理端） -->
+      <section id="admin-view-merchants" class="admin-view">
+        <div class="admin-view-head">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="admin-back-brands" class="btn-admin-back hidden" data-i18n="admin_back_brands">返回品牌列表</button>
+            <h2 data-i18n="admin_merchants">合作商家</h2>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="admin-btn-register-agent" class="btn-admin-add hidden">注册代理</button>
+            <button id="admin-btn-register-merchant" class="btn-admin-add" data-i18n="admin_register_merchant">开通商铺</button>
+          </div>
+        </div>
+        <div id="admin-brand-badge" class="hint"></div>
+        <div id="admin-merchant-list"></div>
+      </section>
+
+      <!-- 商家详情（品牌方/管理端查看销售数据） -->
+      <section id="admin-view-merchant-detail" class="admin-view">
+        <div class="admin-view-head">
+          <button class="btn-admin-back" onclick="Admin.backToMerchants()" data-i18n="admin_back_merchants">返回商家列表</button>
+          <h2 id="admin-merchant-detail-title"></h2>
+        </div>
+        <div id="admin-merchant-detail"></div>
+      </section>
+
+      <!-- 折扣审核（品牌方 / 管理端） -->
+      <section id="admin-view-discounts" class="admin-view">
+        <div class="admin-view-head">
+          <h2 data-i18n="admin_discounts">折扣审核</h2>
+        </div>
+        <div class="hint" data-i18n="admin_discounts_hint">审核合作商家上传的活动折扣凭证（中医馆消费凭证−S$10 / 社媒分享−S$10</div>
+      </section>
+
+      <!-- 进货审核（品牌方 / 管理端） -->
+      <section id="admin-view-purchase" class="admin-view">
+        <div class="admin-view-head">
+          <h2 data-i18n="admin_purchase">进货审核</h2>
+        </div>
+        <div class="hint" data-i18n="admin_purchase_hint">审核合作商家的进货申请（品牌供货价 S$20/个，核对付款截图</div>
+        <div id="admin-purchase-list"></div>
+      </section>
+
+      <!-- 发货单（品牌方） -->
+      <section id="admin-view-shipments" class="admin-view">
+        <div class="admin-view-head">
+          <h2 data-i18n="admin_shipments">发货管理</h2>
+          <button id="admin-btn-new-shipment" class="btn-admin-add" data-i18n="admin_new_shipment">新建发货单</button>
+        </div>
+        <div id="admin-shipment-list"></div>
+      </section>
+
+      <!-- 发货单详情+ 清点） -->
+      <section id="admin-view-shipment-detail" class="admin-view">
+        <div class="admin-view-head">
+          <button class="btn-admin-back" onclick="Admin.backToShipments()" data-i18n="admin_shipments">返回发货管理</button>
+          <h2 id="admin-shipment-detail-title"></h2>
+        </div>
+        <div id="admin-shipment-detail"></div>
+      </section>
+
+      <!-- 管理端账户列-->
+      <section id="admin-view-admins" class="admin-view">
+        <div class="admin-view-head">
+          <h2 data-i18n="admin_accounts">管理端账户</h2>
+          <button id="admin-btn-register-admin" class="btn-admin-add" data-i18n="admin_register_admin">注册管理端</button>
+        </div>
+        <div id="admin-admin-list"></div>
+      </section>
+
+      <!-- 销售趋势（超管/总代） -->
+      <section id="admin-view-sales-trend" class="admin-view">
+        <div class="admin-view-head">
+          <h2>销售趋势</h2>
+        </div>
+        <div class="section-card" style="margin:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <select id="admin-trend-product" style="padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
+              <option value="">全部商品</option>
+            </select>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button class="btn btn-secondary admin-trend-btn" data-period="today">本日</button>
+              <button class="btn btn-secondary admin-trend-btn" data-period="week">本周</button>
+              <button class="btn btn-secondary admin-trend-btn active" data-period="month">本月</button>
+              <button class="btn btn-secondary admin-trend-btn" data-period="month_all">每月</button>
+              <button class="btn btn-secondary admin-trend-btn" data-period="quarter">每季度</button>
+              <button class="btn btn-secondary admin-trend-btn" data-period="year_all">每年</button>
+            </div>
+          </div>
+          <canvas id="admin-sales-trend-chart" style="max-height:320px;"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航（按角色-->
+    <nav class="bottom-nav" id="admin-bottom-nav" style="position:fixed;bottom:0;left:0;right:0;max-width:820px;margin:0 auto;"></nav>
+  </div>
+
+  <!-- 开通商铺新建弹窗 -->
+  <div id="admin-modal-overlay" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 id="admin-modal-title">注册品牌</h3>
+      <div id="admin-modal-body"></div>
+      <div class="admin-modal-actions">
+        <button id="admin-modal-close" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="admin-modal-confirm" class="btn btn-primary" data-i18n="admin_generate">确认开通</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗（管理端，三次确认防误删-->
+  <div id="admin-delete-overlay" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 data-i18n="admin_delete_title">删除账户</h3>
+      <div id="admin-delete-body" class="admin-delete-body"></div>
+      <div class="admin-modal-actions">
+        <button id="admin-delete-cancel" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="admin-delete-confirm" class="btn btn-danger">确认删除 (1/3)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 注册管理端弹窗（仅超管） -->
+  <div id="admin-register-admin-modal" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 data-i18n="admin_register_admin">注册管理端</h3>
+      <div class="form-group">
+        <label data-i18n="admin_new_admin_name">管理端名称</label>
+        <input type="text" id="admin-register-admin-name" placeholder="如：运营管理员">
+      </div>
+      <div class="form-group">
+        <label data-i18n="new_password">登录密码（留空则自动生成</label>
+        <input type="text" id="admin-register-admin-key" placeholder="可选，自定义密码">
+        <div class="fixed-hint" data-i18n="password_rule">至少8位，须含大写字母、小写字母和数字</div>
+      </div>
+      <div class="admin-modal-actions">
+        <button id="admin-register-admin-close" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="admin-register-admin-submit" class="btn btn-primary" data-i18n="admin_generate">生成密码</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改自己密码弹窗（地区代理/普通管理端，仅一次） -->
+  <div id="admin-self-pwd-modal" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 data-i18n="change_password">修改密码</h3>
+      <div class="form-group">
+        <label data-i18n="new_password">新密</label>
+        <input type="text" id="admin-self-pwd-new" placeholder="至少8位，含大小写+数字+特殊字符">
+        <div class="fixed-hint" data-i18n="password_rule">至少8位，须含大写字母、小写字母、数字和特殊字符</div>
+        <div class="fixed-hint" style="color:#dc2626;font-weight:600;" id="admin-self-pwd-onetime" data-i18n="password_one_time">注意：密码仅可修改一次，请妥善保管</div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="confirm_password">确认新密码</label>
+        <input type="text" id="admin-self-pwd-confirm" placeholder="再次输入新密码">
+      </div>
+      <div class="admin-modal-actions">
+        <button id="admin-self-pwd-cancel" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="admin-self-pwd-submit" class="btn btn-primary" data-i18n="confirm">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 超管修改管理端密码弹窗（三次确认）-->
+  <div id="admin-reset-pwd-modal" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 data-i18n="change_password">修改密码</h3>
+      <div id="reset-pwd-target" class="admin-delete-body" style="margin-bottom:10px;font-weight:600;"></div>
+      <div class="form-group">
+        <label data-i18n="new_password">新密</label>
+        <input type="text" id="reset-pwd-new" placeholder="至少8位，含大小写+数字">
+        <div class="fixed-hint" data-i18n="password_rule">至少8位，须含大写字母、小写字母和数字</div>
+      </div>
+      <div class="admin-modal-actions">
+        <button id="reset-pwd-cancel" class="btn btn-secondary" data-i18n="cancel">取消</button>
+        <button id="reset-pwd-confirm" class="btn btn-danger">确认修改 (1/3)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用操作弹窗（居中，替代原生confirm）-->
+  <div id="admin-action-overlay" class="admin-modal-overlay hidden">
+    <div class="admin-modal">
+      <h3 id="admin-action-title">操作</h3>
+      <div id="admin-action-body" style="font-size:14px;color:#475569;line-height:1.6;"></div>
+      <div id="admin-action-actions" class="admin-modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/js/vendor/html5-qrcode.min.js?v=43"></script>
+  <script src="/js/i18n.js?v=43"></script>
+  <script src="/js/finance.js?v=43"></script>
+  <script src="/js/scanner.js?v=43"></script>
+  <script src="/js/admin.js?v=49"></script>
+</body>
+</html>

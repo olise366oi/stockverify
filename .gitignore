@@ -1,0 +1,40 @@
+# 依赖
+node_modules/
+
+# 数据库（运行时生成，含业务数据，不入库）
+data/*.db
+data/*.db-*
+data/uploads/
+
+# 环境变量
+.env
+.env.local
+
+# 备份目录（阶段备份，不入库）
+backup-*/
+backup-phase*/
+D:/pwa-system-backup/
+
+# 日志
+*.log
+server-run.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 运行时临时文件
+*.tmp
+cloudflared.exe
+
+# 根目录历史调试脚本（含旧测试凭证，不入库）
+/_fix.js
+
+# 测试素材目录（不入库）
+/qr/
+/测试图片/
+
+# 开发工具脚本：仅保留数据迁移/账号种子脚本，其余历史测试脚本不入库
+tools/*
+!tools/rebrand-login16.js
+!tools/rebrand-stockverify.js
