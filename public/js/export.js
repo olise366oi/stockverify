@@ -35,8 +35,8 @@ const ExportManager = (() => {
       ['不含税成交基数(' + CC + ')']: t.amount_before_gst,
       [TAX + ' ' + Math.round(RATE * 100) + '%(' + CC + ')']: t.gst_amount,
       ['含税总额(' + CC + ')']: t.total_amount,
-      ['品牌方分成(' + CC + ')']: t.type === 'outbound' ? (t.brand_share || 0) : '-',
-      ['商铺分成(' + CC + ')']: t.type === 'outbound' ? (t.merchant_share || 0) : '-',
+      ['平台方分成(' + CC + ')']: (t.type === 'outbound' || t.type === 'sale') ? (t.brand_share || 0) : '-',
+      ['商铺分成(' + CC + ')']: (t.type === 'outbound' || t.type === 'sale') ? (t.merchant_share || 0) : '-',
       '折扣状态': t.discount_status && t.discount_status !== 'none' ? (t.discount_status === 'approved' ? '√ 已通过' : (t.discount_status === 'rejected' ? '× 已驳回' : '待审核')) : '-',
       '核对状态': t.verified ? '√ 通过' : (t.type === 'inbound' ? '× 未通过' : '-'),
       '发货单ID': t.shipment_id || '',
@@ -73,9 +73,9 @@ const ExportManager = (() => {
       { '销售件数': summary.salesQty || 0 },
       { '成本总额': summary.costTotal || 0 },
       { '折扣总额': summary.discountTotal || 0 },
-      { '品牌方分成': summary.brandShare || 0 },
+      { '平台方分成': summary.brandShare || 0 },
       { '商铺分成': summary.merchantShare || 0 },
-      { '回款品牌方税': summary.brandGst || 0 },
+      { '回款平台方税': summary.brandGst || 0 },
       { '商铺自交税': summary.merchantGst || 0 },
       { '': '' },
       { '报表生成时间': new Date().toLocaleString('zh-CN') }
@@ -86,7 +86,7 @@ const ExportManager = (() => {
     // 工作表3：每日流水汇总
     const dailyMap = {};
     transactions.forEach(t => {
-      if (t.type !== 'outbound') return;
+      if (t.type !== 'outbound' && t.type !== 'sale') return;
       const day = (t.server_timestamp || t.client_timestamp || '').slice(0, 10);
       if (!dailyMap[day]) dailyMap[day] = { qty: 0, discount: 0, base: 0, gst: 0, total: 0, brand: 0, merchant: 0 };
       dailyMap[day].qty += Number(t.quantity) || 0;
@@ -104,7 +104,7 @@ const ExportManager = (() => {
       ['不含税(' + CC + ')']: dailyMap[day].base.toFixed(2),
       [TAX + '(' + CC + ')']: dailyMap[day].gst.toFixed(2),
       ['含税总额(' + CC + ')']: dailyMap[day].total.toFixed(2),
-      ['品牌方分成(' + CC + ')']: dailyMap[day].brand.toFixed(2),
+      ['平台方分成(' + CC + ')']: dailyMap[day].brand.toFixed(2),
       ['商铺分成(' + CC + ')']: dailyMap[day].merchant.toFixed(2)
     }));
     const wsDaily = XLSX.utils.json_to_sheet(dailyData);

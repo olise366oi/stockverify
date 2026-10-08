@@ -103,13 +103,15 @@ async function applyScan(req, res, type) {
     await db.run(`UPDATE products SET stock = stock ${sign} ?, last_write_at = ? WHERE id = ?`,
       q, new Date().toISOString(), pid);
 
+    // 交易流水 type 与 dashboard 统计口径一致：出库写 'sale'（审计日志 action 仍为 outbound，页面显示"出库"）
+    const txType = type === 'outbound' ? 'sale' : type;
     // 写入交易流水（与原表结构一致，使用含税口径计算字段）
     await db.run(`
       INSERT INTO transactions (shop_id, product_id, product_name, type, quantity, unit_price,
         amount_before_gst, gst_amount, total_amount, platform_share, merchant_share, commission_gst,
         operator_id, operator_name, client_timestamp, sync_status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
-    `, req.user.shopId, product.id, product.name, type, q, product.sell_price || 0,
+    `, req.user.shopId, product.id, product.name, txType, q, product.sell_price || 0,
       f.amountBeforeGST, f.gstAmount, f.totalAmount,
       f.platformShare, f.merchantShare, f.commissionGst,
       req.user.userId, req.user.username, new Date().toISOString());
@@ -267,12 +269,13 @@ router.post('/sync', v1Auth, async (req, res) => {
       const sign = type === 'inbound' ? '+' : '-';
       await db.run(`UPDATE products SET stock = stock ${sign} ?, last_write_at = ? WHERE id = ?`,
         q, r.clientTimestamp || new Date().toISOString(), pid);
+      const txType = type === 'outbound' ? 'sale' : type; // 出库 type 与 dashboard 口径一致；审计 action 保持 outbound
       await db.run(`
         INSERT INTO transactions (shop_id, product_id, product_name, type, quantity, unit_price,
           amount_before_gst, gst_amount, total_amount, platform_share, merchant_share, commission_gst,
           operator_id, operator_name, client_timestamp, client_record_id, sync_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
-      `, req.user.shopId, product.id, product.name, type, q, product.sell_price || 0,
+      `, req.user.shopId, product.id, product.name, txType, q, product.sell_price || 0,
         f.amountBeforeGST, f.gstAmount, f.totalAmount,
         f.platformShare, f.merchantShare, f.commissionGst,
         req.user.userId, req.user.username, r.clientTimestamp || new Date().toISOString(), r.clientRecordId || null);
@@ -341,7 +344,7 @@ router.get('/export/excel', v1Auth, async (req, res) => {
     ws1.addRow({ item: `佣金附加${TAX}`, value: s.commission.applyTax ? '是' : '否' });
     ws1.addRow({ item: '交易笔数', value: rows.length });
     ws1.addRow({ item: '入库笔数', value: rows.filter(r => r.type === 'inbound').length });
-    ws1.addRow({ item: '出库笔数', value: rows.filter(r => r.type === 'outbound').length });
+    ws1.addRow({ item: '出库笔数', value: rows.filter(r => r.type === 'outbound' || r.type === 'sale').length });
     ws1.addRow({ item: `不含税总额(${s.currency.code})`, value: Number(sum(rows, 'amount_before_gst').toFixed(2)) });
     ws1.addRow({ item: `${TAX} 总额(${s.currency.code})`, value: Number(sum(rows, 'gst_amount').toFixed(2)) });
     ws1.addRow({ item: `含税总额(${s.currency.code})`, value: Number(sum(rows, 'total_amount').toFixed(2)) });
@@ -385,8 +388,8 @@ router.get('/export/excel', v1Auth, async (req, res) => {
         base: r.amount_before_gst,
         gst: r.gst_amount,
         total: r.total_amount,
-        pf: r.type === 'outbound' ? r.platform_share : '-',
-        mf: r.type === 'outbound' ? r.merchant_share : '-',
+        pf: (r.type === 'outbound' || r.type === 'sale') ? r.platform_share : '-',
+        mf: (r.type === 'outbound' || r.type === 'sale') ? r.merchant_share : '-',
         cg: r.commission_gst || 0,
         op: r.operator_name,
         sync: r.sync_status

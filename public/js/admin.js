@@ -1660,7 +1660,7 @@ const Admin = (() => {
         el.innerHTML = `<div class="empty-tip">${I18n.t('admin_no_discounts')}</div>`;
         return;
       }
-      const dname = { medical: '中医馆 −10', social: '社媒 −10', both: '两项 −20' };
+      const dname = { medical: '满减优惠 −10', social: '活动折扣 −10', both: '叠加 −20' };
       el.innerHTML = list.map(d => `
         <div class="admin-discount-card">
           <div class="admin-discount-head">
@@ -2214,7 +2214,7 @@ const Admin = (() => {
   function openDeleteConfirm(id, name, type) {
     deleteTarget = { id, name, type };
     deleteStep = 0;
-    const typeLabel = type === 'brand' ? '品牌方' : (type === 'merchant' ? '合作商家' : '账户');
+    const typeLabel = type === 'brand' ? '平台方' : (type === 'merchant' ? '合作商家' : '账户');
     const body = document.getElementById('admin-delete-body');
     body.innerHTML = `
       <p>即将删除 <b>${escapeHtml(name)}</b>（${typeLabel}）</p>

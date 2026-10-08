@@ -8,13 +8,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1e40af">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>StockVerify · 品牌管理</title>
+  <title>StockVerify · 系统管理</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/css/style.css?v=43">
 </head>
 <body class="admin-body">
-  <!-- 登录页（品牌方 / 管理端） -->
+  <!-- 登录页（平台方 / 管理端） -->
   <div id="admin-login" class="admin-page active">
     <div style="position:absolute;top:14px;right:16px;display:flex;gap:2px;">
       <button data-lang-btn="zh" class="lang-btn active" style="background:none;border:none;color:#cbd5e1;font-size:12px;padding:4px 8px;cursor:pointer;">简体中</button>
@@ -26,8 +26,8 @@
       <h1 class="admin-login-title" data-i18n="login_title">Hello, my friend!</h1>
 
       <div class="admin-role-switch">
-        <button id="admin-role-brand" class="admin-role-btn" onclick="Admin.setRole('brand')" data-i18n="admin_role_brand">品牌</button>
-        <button id="admin-role-admin" class="admin-role-btn" onclick="Admin.setRole('admin')" data-i18n="admin_role_admin">管理</button>
+        <button id="admin-role-brand" class="admin-role-btn" onclick="Admin.setRole('brand')" data-i18n="admin_role_brand">平台方</button>
+        <button id="admin-role-admin" class="admin-role-btn" onclick="Admin.setRole('admin')" data-i18n="admin_role_admin">系统管理</button>
       </div>
 
       <div class="admin-login-form">
@@ -56,7 +56,7 @@
       <div class="admin-header-left">
         <img src="/img/stockverify-logo.png" alt="StockVerify" class="admin-header-logo">
         <div>
-          <div class="admin-header-title" data-i18n="admin_title">StockVerify 品牌管理</div>
+          <div class="admin-header-title" data-i18n="admin_title">StockVerify 系统管理</div>
           <div class="admin-header-sub" id="admin-header-sub"></div>
         </div>
       </div>
@@ -70,10 +70,10 @@
     </header>
 
     <main class="admin-content">
-      <!-- 品牌方列表（管理端） -->
+      <!-- 平台方列表（管理端） -->
       <section id="admin-view-brands" class="admin-view">
         <div class="admin-view-head">
-          <h2 data-i18n="admin_brands">品牌方列表</h2>
+          <h2 data-i18n="admin_brands">地区代理列表</h2>
           <button id="admin-btn-register-brand" class="btn-admin-add" data-i18n="admin_register_brand">注册品牌</button>
         </div>
         <div id="admin-brand-list"></div>
@@ -153,7 +153,7 @@
         <div class="admin-view-head">
           <h2 data-i18n="admin_discounts">折扣审核</h2>
         </div>
-        <div class="hint" data-i18n="admin_discounts_hint">审核合作商家上传的活动折扣凭证（中医馆消费凭证−S$10 / 社媒分享−S$10</div>
+        <div class="hint" data-i18n="admin_discounts_hint">审核合作商家上传的活动折扣凭证（满减优惠 −S$10 / 活动折扣 −S$10</div>
       </section>
 
       <!-- 进货审核（品牌方 / 管理端） -->

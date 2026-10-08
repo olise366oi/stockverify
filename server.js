@@ -776,7 +776,7 @@ app.post('/api/transactions/outbound', authMiddleware, requireRole('merchant', '
         amount_before_gst, gst_amount, total_amount, platform_share, brand_share, merchant_share, commission_gst,
         operator_id, operator_name, client_timestamp, client_record_id, sync_status,
         discount_type, discount_amount, discount_medical_img, discount_social_img, discount_status, discounted_price)
-      VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, ?, 'synced', ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, 'sale', ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, ?, 'synced', ?, ?, ?, ?, ?, ?)
     `, req.user.shopId, product.id, product.name, qty, price,
       finance.amountBeforeGST, finance.gstAmount, finance.totalAmount,
       finance.brandShare, finance.merchantShare,

@@ -51,7 +51,7 @@
         </div>
         <button id="btn-login" class="btn btn-primary btn-block" data-i18n="login_btn">登录系统</button>
       </div>
-      <p class="login-footer">© StockVerify · 多国零售核销与税务对账系统 · <span id="login-config-info">Singapore · SGD · GST 9% · 售价含税</span></p>
+      <p class="login-footer">© StockVerify · 多国零售核销与税务对账系统 · <span id="login-config-info">当前配置：SGD · GST 9% · 售价含税</span></p>
     </div>
   </div>
 
@@ -193,18 +193,18 @@
             <!-- 活动折扣（仅出库销售） -->
             <div id="discount-section" class="discount-section hidden">
               <div class="form-group">
-                <label data-i18n="discount_label">活动折扣（与中医馆合作 · 品牌活动</label>
+                <label data-i18n="discount_label">活动折扣（凭证核销 · 可选）</label>
                 <select id="confirm-discount">
-                  <option value="none" data-i18n="discount_none">无折</option>
-                  <option value="medical" data-i18n="discount_medical">中医馆消费凭证−S$10</option>
-                  <option value="social" data-i18n="discount_social">社媒分享截图 −S$10</option>
-                  <option value="both" data-i18n="discount_both">两项都满足−S$20</option>
+                  <option value="none" data-i18n="discount_none">无折扣</option>
+                  <option value="medical" data-i18n="discount_medical">满减优惠 −S$10</option>
+                  <option value="social" data-i18n="discount_social">活动折扣 −S$10</option>
+                  <option value="both" data-i18n="discount_both">叠加优惠 −S$20</option>
                 </select>
-                <small class="fixed-hint" data-i18n="discount_hint">折扣从品牌分成中扣除 · GST 按折后金额计</small>
+                <small class="fixed-hint" data-i18n="discount_hint">折扣从平台分成中扣除 · 税按折后金额计算</small>
               </div>
               <div id="discount-uploads">
                 <div id="discount-medical-box" class="upload-box hidden">
-                  <label data-i18n="discount_medical_img">�?中医馆消费凭证图</label>
+                  <label data-i18n="discount_medical_img">① 满减凭证（可选）</label>
                   <div class="upload-zone" onclick="App.clickUpload('medical')">
                     <input type="file" id="discount-medical-input" accept="image/*" class="hidden" onchange="App.handleUploadFile('medical', this)">
                     <span id="discount-medical-name" data-i18n="tap_to_upload">点击上传图片</span>
@@ -212,7 +212,7 @@
                   <img id="discount-medical-preview" class="upload-preview hidden" alt="">
                 </div>
                 <div id="discount-social-box" class="upload-box hidden">
-                  <label data-i18n="discount_social_img">�?社媒分享截图</label>
+                  <label data-i18n="discount_social_img">② 活动凭证（可选）</label>
                   <div class="upload-zone" onclick="App.clickUpload('social')">
                     <input type="file" id="discount-social-input" accept="image/*" class="hidden" onchange="App.handleUploadFile('social', this)">
                     <span id="discount-social-name" data-i18n="tap_to_upload">点击上传图片</span>
@@ -398,9 +398,9 @@
               <div><span class="rs-label">销售件</span><span class="rs-value" id="rs-sales-qty">0</span></div>
               <div><span class="rs-label">成本总额</span><span class="rs-value" id="rs-cost">$0</span></div>
               <div><span class="rs-label">折扣总额</span><span class="rs-value" id="rs-discount">$0</span></div>
-              <div><span class="rs-label">品牌方分</span><span class="rs-value" id="rs-brand-share">$0</span></div>
+              <div><span class="rs-label">平台方分</span><span class="rs-value" id="rs-brand-share">$0</span></div>
               <div><span class="rs-label">商铺分成</span><span class="rs-value" id="rs-merchant-share">$0</span></div>
-              <div><span class="rs-label">回款品牌方GST</span><span class="rs-value" id="rs-brand-gst">$0</span></div>
+              <div><span class="rs-label">回款平台方GST</span><span class="rs-value" id="rs-brand-gst">$0</span></div>
               <div><span class="rs-label">商铺自交GST</span><span class="rs-value" id="rs-merchant-gst">$0</span></div>
             </div>
           </div>
@@ -412,7 +412,7 @@
             <table id="report-daily-table" class="report-table">
               <thead>
                 <tr>
-                  <th>日期</th><th>销售件数</th><th>折扣</th><th>不含税</th><th>GST</th><th>含税总额</th><th>品牌分成</th><th>商铺分成</th>
+                  <th>日期</th><th>销售件数</th><th>折扣</th><th>不含税</th><th>GST</th><th>含税总额</th><th>平台分成</th><th>商铺分成</th>
                 </tr>
               </thead>
               <tbody id="report-daily-tbody"></tbody>
@@ -427,7 +427,7 @@
               <thead>
                 <tr>
                   <th data-i18n="time">时间</th><th data-i18n="type">类型</th><th data-i18n="product_name">商品</th><th data-i18n="qty">数量</th><th data-i18n="unit_price">单价</th>
-                  <th data-i18n="discount_amount">折扣</th><th data-i18n="base_amount">不含税基数</th><th data-i18n="gst_amount">GST</th><th data-i18n="total_amount">含税总额</th><th>品牌分成</th><th>商铺分成</th><th data-i18n="status">核对</th><th data-i18n="operator">操作人</th>
+                  <th data-i18n="discount_amount">折扣</th><th data-i18n="base_amount">不含税基数</th><th data-i18n="gst_amount">GST</th><th data-i18n="total_amount">含税总额</th><th>平台分成</th><th>商铺分成</th><th data-i18n="status">核对</th><th data-i18n="operator">操作人</th>
                 </tr>
               </thead>
               <tbody id="report-tbody"></tbody>
@@ -454,7 +454,7 @@
           <div class="form-group">
             <label data-i18n="purchase_qty">进货数量</label>
             <input type="number" id="purchase-qty" value="1" min="1" max="9999">
-            <small class="fixed-hint" data-i18n="purchase_cost_hint">品牌供货价 S$20 / 个（品牌链路业务规则）</small>
+            <small class="fixed-hint" data-i18n="purchase_cost_hint">供货价 S$20 / 个（平台链路业务规则）</small>
           </div>
           <div class="form-group">
             <label data-i18n="purchase_pay_img">付款截图凭证</label>
@@ -537,7 +537,7 @@
           <div class="form-group">
             <label data-i18n="shop_name">店铺名称</label>
             <input type="text" id="setting-shop-name" readonly>
-            <div class="fixed-hint" data-i18n="shop_name_fixed_hint">店铺名称由品牌方开户时固定，商家不可修改</div>
+            <div class="fixed-hint" data-i18n="shop_name_fixed_hint">店铺名称由平台方开户时固定，商家不可修改</div>
           </div>
           <div class="form-group">
             <label data-i18n="account">当前账号</label>
@@ -546,7 +546,7 @@
           <div class="form-group">
             <label data-i18n="gst_rate">GST税率</label>
             <input type="number" id="setting-gst-rate" readonly>
-            <div class="fixed-hint" data-i18n="gst_fixed_hint">由品牌方开户时按国家确定，商家不可修改</div>
+            <div class="fixed-hint" data-i18n="gst_fixed_hint">由平台方开户时按国家确定，商家不可修改</div>
           </div>
           <div class="form-group">
             <label data-i18n="country_label">所在国家/地区</label>

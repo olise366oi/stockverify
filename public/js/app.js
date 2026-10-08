@@ -1,7 +1,7 @@
 /**
  * 主应用逻辑（合作商家端）
  * StockVerify · 多国零售核销与税务对账系统
- * 合作商家扫码出入库 · 入库自动核对品牌方发货单（√/×） · 售价/成本按商品档案 · 三语
+ * 合作商家扫码出入库 · 入库自动核对平台方发货单（√/×） · 售价/成本按商品档案 · 三语
  */
 const App = (() => {
   // ========== 状态 ==========
@@ -29,16 +29,18 @@ const App = (() => {
         const s = cfgData.settings;
         CUR = s.currencySymbol || CUR;
         Finance.setConfig({ gstRate: s.taxRate, currencySymbol: s.currencySymbol || '$', taxName: s.taxName || 'GST', priceIncludesTax: s.priceIncludesTax !== false });
-        const info = `${s.country || ''} · ${s.currencyCode || ''} · ${s.taxName || 'GST'} ${Number(s.taxRate || 0) * 100}% · 售价${s.priceIncludesTax ? '含税' : '不含税'}`;
+        const info = `当前配置：${s.currencyCode || ''} · ${s.taxName || 'GST'} ${Number(s.taxRate || 0) * 100}% · 售价${s.priceIncludesTax ? '含税' : '不含税'}`;
         const loginInfo = document.getElementById('login-config-info');
         if (loginInfo) loginInfo.textContent = info;
         const reportInfo = document.getElementById('report-config-info');
         if (reportInfo) reportInfo.textContent = info;
+        setDiscountOptions();
       }
     } catch (e) { /* 配置拉取失败时使用默认展示 */ }
     // 语言真正变化后才重渲染动态内容
     window.__onLangChange = (lang) => {
       updateOfflineBar(0);
+      setDiscountOptions();
       if (lang === lastLang) return;
       lastLang = lang;
       if (currentUser) {
@@ -480,6 +482,21 @@ const App = (() => {
 
   const DISCOUNT_VALUES = { none: 0, medical: 10, social: 10, both: 20 };
 
+  function setDiscountOptions() {
+    const sel = document.getElementById('confirm-discount');
+    if (!sel) return;
+    const sym = (Finance.getConfig().currencySymbol) || CUR || 'S$';
+    const labels = {
+      none: I18n.t('discount_none'),
+      medical: I18n.t('discount_medical') + ' −' + sym + '10',
+      social: I18n.t('discount_social') + ' −' + sym + '10',
+      both: I18n.t('discount_both') + ' −' + sym + '20'
+    };
+    for (const opt of sel.options) {
+      if (labels[opt.value]) opt.textContent = labels[opt.value];
+    }
+  }
+
   function updateFinancePreview() {
     const qty = parseInt(document.getElementById('confirm-quantity').value) || 0;
     const price = currentScanProduct?.sell_price || FIXED_PRICE;
@@ -622,7 +639,7 @@ const App = (() => {
     } catch (err) {
       // 入库核对失败（×）：不入待同步队列
       if (scanType === 'inbound' && (err.code === 'SHIPMENT_MISMATCH' || /发货清单|核对/.test(err.message || ''))) {
-        showScanResult(false, err.message || '该条码不在品牌方发货清单中（×）');
+        showScanResult(false, err.message || '该条码不在平台方发货清单中（×）');
         return;
       }
       // 业务错误（如库存不足）→ 显示失败，不入队
@@ -1272,7 +1289,7 @@ const App = (() => {
           <div class="shipment-progress">
             <span>${I18n.t('received')}: ${received}/${total}</span>
           </div>
-          <p class="hint">${s.status === 'shipped' ? '品牌方已发货，请扫码入库核对（√/×）' : (s.status === 'received' ? '已全部收货完成' : '')}</p>
+          <p class="hint">${s.status === 'shipped' ? '平台方已发货，请扫码入库核对（√/×）' : (s.status === 'received' ? '已全部收货完成' : '')}</p>
         </div>`;
     } catch (err) {
       el.innerHTML = `<div class="empty-tip">${escapeHtml(err.message)}</div>`;
@@ -1457,7 +1474,7 @@ const App = (() => {
       let catalog = [];
       try { catalog = await api('/api/merchant/catalog'); } catch (e) {}
       if (catalog.length === 0) {
-        sel.innerHTML = `<option value="" data-i18n="purchase_noproduct">暂无商品，请等待品牌方授权后再进货</option>`;
+        sel.innerHTML = `<option value="" data-i18n="purchase_noproduct">暂无商品，请等待平台方授权后再进货</option>`;
       } else {
         sel.innerHTML = `<option value="" data-i18n="purchase_sel_ph">请选择要进货的商品</option>` +
           catalog.map(c => `<option value="catalog_${c.id}" data-name="${escapeHtml(c.name)}" data-price="${c.cost_price}">${escapeHtml(c.name)}（成本 ${CUR}${Number(c.cost_price).toFixed(2)} · 售价 ${CUR}${Number(c.sell_price).toFixed(2)}）</option>`).join('');
