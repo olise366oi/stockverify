@@ -28,7 +28,7 @@ const App = (() => {
       if (cfgData && cfgData.settings) {
         const s = cfgData.settings;
         CUR = s.currencySymbol || CUR;
-        Finance.setConfig({ gstRate: s.taxRate, currencySymbol: s.currencySymbol || '$', taxName: s.taxName || 'GST' });
+        Finance.setConfig({ gstRate: s.taxRate, currencySymbol: s.currencySymbol || '$', taxName: s.taxName || 'GST', priceIncludesTax: s.priceIncludesTax !== false });
         const info = `${s.country || ''} · ${s.currencyCode || ''} · ${s.taxName || 'GST'} ${Number(s.taxRate || 0) * 100}% · 售价${s.priceIncludesTax ? '含税' : '不含税'}`;
         const loginInfo = document.getElementById('login-config-info');
         if (loginInfo) loginInfo.textContent = info;

@@ -142,6 +142,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 .search-bar input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
 .search-bar select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: #fff; }
 .product-list { display: flex; flex-direction: column; gap: 10px; }
+.demo-note { font-size: 12px; line-height: 1.5; color: #8a93a6; background: rgba(255, 255, 255, 0.06); border: 1px dashed #3a4152; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
 .product-item { background: var(--card); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; }
 .product-info { flex: 1; }
 .product-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
