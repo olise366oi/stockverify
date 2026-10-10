@@ -146,6 +146,19 @@ npm start
 4. 补传走 `POST /api/v1/sync`，按 `clientRecordId` 判重，重复记录不会二次入账；
 5. 断网浏览页面时，Service Worker 回退到 `offline.html` 离线提示页，联网后一键返回。
 
+## 质量指标（Lighthouse 实测）
+
+| 类别 | 分数 |
+|------|------|
+| Performance | 97 |
+| Accessibility | 97 |
+| Best Practices | 100 |
+| SEO | 100 |
+
+PWA 可安装性：installable-manifest ✅ / maskable-icon ✅ / splash-screen ✅ / themed-omnibox ✅
+
+离线验证（Playwright）：断网访问已缓存页面正常返回；无缓存的导航回退 `offline.html`
+
 ## 安全说明
 
 - **强制 HTTPS**：生产环境（Nginx/负载均衡层）将 HTTP 301 跳转到 HTTPS，禁止明文 HTTP 提供服务；

@@ -39,3 +39,5 @@ tools/*
 !tools/rebrand-login16.js
 !tools/rebrand-stockverify.js
 *.bak
+lighthouse-*.json
+offline-test.mjs

@@ -32,6 +32,15 @@ function v1Auth(req, res, next) {
 }
 
 // 管理员权限中间件（仅 role=admin 可访问）
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: '权限不足' });
+    }
+    next();
+  };
+}
+
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ error: '需要管理端权限' });
@@ -294,15 +303,17 @@ router.post('/sync', v1Auth, async (req, res) => {
 });
 
 // GET /api/v1/logs — 操作日志（最近 200 条，含设备信息）
-router.get('/logs', v1Auth, async (req, res) => {
+router.get('/logs', v1Auth, requireRole('merchant', 'brand', 'admin'), async (req, res) => {
   const db = getDb();
   try {
+    // 按当前用户的 shopId 过滤（修复跨租户越权）
     const logs = await db.all(`
       SELECT l.id, l.shop_id, s.shop_name, l.user_id, l.username, l.action, l.target_id, l.target_name,
              l.note, l.device_info, l.create_at, l.prev_hash, l.this_hash
       FROM audit_logs l LEFT JOIN shops s ON s.id = l.shop_id
+      WHERE l.shop_id = ?
       ORDER BY l.id DESC LIMIT 200
-    `);
+    `, req.user.shopId);
     res.json({ success: true, count: logs.length, logs });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -310,7 +321,7 @@ router.get('/logs', v1Auth, async (req, res) => {
 });
 
 // GET /api/v1/export/excel — 服务端生成 Excel 对账报表（exceljs）
-router.get('/export/excel', v1Auth, async (req, res) => {
+router.get('/export/excel', v1Auth, requireRole('merchant', 'brand', 'admin'), async (req, res) => {
   try {
     const ExcelJS = require('exceljs');
     const db = getDb();

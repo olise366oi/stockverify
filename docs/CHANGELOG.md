@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v0.3.2 — 权限修复与 SEO 优化
+
+### 安全修复
+
+- **P0 跨租户越权修复**：`/api/v1/logs` 缺少 `WHERE shop_id = ?`，任意登录用户可读取全库所有店铺的审计日志；现已按 `req.user.shopId` 过滤
+- **P1 权限降级修复**：`/api/v1/logs` 和 `/api/v1/export/excel` 仅校验 token 未校验角色，staff 可访问；现限制为 `requireRole('merchant','brand','admin')`
+
+### SEO / 质量
+
+- `public/index.html` 补充 `meta description`
+- 新增 `public/robots.txt`（`Disallow: /admin.html`、`/api/`）
+- README 补充 Lighthouse 实测分数与离线验证结论
+
 ## v0.3.1 — PWA 稳定性与审查修复
 
 ### 修复
