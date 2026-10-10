@@ -52,6 +52,7 @@ git clone https://github.com/olise366oi/stockverify.git
 cd stockverify
 npm install
 npm start           # 打开 http://localhost:3000
+npm test            # 运行单元测试（node:test，零依赖）
 ```
 
 初始账号见 [docs/INIT.md](docs/INIT.md)。
