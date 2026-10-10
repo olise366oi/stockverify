@@ -99,6 +99,23 @@ PWA 可安装性 — installable-manifest ✅ · maskable-icon ✅ · splash-scr
 
 离线验证（Playwright 自动化） — 断网访问已缓存页面正常返回；无缓存的导航回退 offline.html
 
+## 测试
+
+```bash
+npm test        # node:test，零依赖
+```
+
+10 个用例，覆盖 2 个纯函数模块：
+
+| 模块 | 用例数 | 覆盖内容 |
+|------|-------|---------|
+| `finance.js` `round2` | 7 | 整数 / 两位小数 / 进位 / 浮点噪声（`0.1+0.2`）/ 负数 / 大数 / 微小值归零 |
+| `security.js` `makeRateLimit` | 3 | 20 次放行 / 第 21 次 429 / 不同 prefix（接口维度）隔离 |
+
+选 `node:test` 而非 Jest / Vitest，是因为项目零前端构建、零 babel，Node 22 内置的 `node:test` + `node:assert` 已满足需求，不引入额外依赖。
+
+后续计划：`calculate`（含税/不含税双口径 + 分成 + 佣金，需 mock `database.js`）、`validatePasswordStrength`（需先将该函数从 `server.js` 导出）。
+
 ## 安全设计
 
 | 层面 | 措施 |
@@ -114,6 +131,18 @@ PWA 可安装性 — installable-manifest ✅ · maskable-icon ✅ · splash-scr
 | 上传 | 图片类型白名单 · 3MB 上限 · 随机文件名 · nosniff |
 
 > 注：登录限流为单实例内存实现（`security.js` 模块级 Map）；多实例水平扩展时需替换为共享存储（如 Redis）。
+
+## 限制与反思
+
+个人项目，以下是当前明确未做到或做不完善的地方：
+
+- **限流为单实例内存实现** — `security.js` 用模块级 `Map` 计数，多实例水平扩展时需替换为 Redis 等共享存储
+- **离线同步采用「最后写入胜出」** — 多设备同时修改同一商品时不做冲突合并，后到者覆盖前者；冲突检测未实现
+- **两套路由体系并存** — `server.js` 有 74 个 legacy 路由未迁移到 `/api/v1/*`，`routes-v1.js` 是新的规范层；迁移工作尚未完成
+- **前端未做模块化拆分** — `public/js/app.js`（1598 行）、`admin.js`（2609 行）仍是单文件，进一步拆分需要引入构建步骤，暂未做
+- **单元测试覆盖有限** — 10 个用例只覆盖 2 个纯函数模块；核心的 `calculate`（含税/不含税双口径 + 分成 + 佣金）与 `validatePasswordStrength` 尚未覆盖，因需要 mock `database.js`
+- **审计链校验依赖单进程** — 哈希链完整性校验 `/api/logs/verify` 在单实例内有效，多实例未做分布式验证
+- **无在线 demo** — 招聘方只能本地 `npm start` 运行，未部署到云平台
 
 ## 文档
 
@@ -179,3 +208,5 @@ docs/            架构说明、CHANGELOG、截图
 ## 版本
 
 当前版本 v0.3.4 — 变更记录见 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
+
+本项目采用 MIT 许可 — 详见 [LICENSE](LICENSE)。
