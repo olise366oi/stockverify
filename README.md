@@ -74,6 +74,8 @@ Key features:
 
 **权限模型** — JWT + RBAC（staff / merchant / brand / admin）· 商品目录多级授权链路 · 服务端 403 拦截
 
+**选型说明** — 后端选 SQLite 而非 PostgreSQL，因为目标场景是单店 / 小连锁，单文件 + 零运维优先；前端不用框架，因为 PWA 启动开销要尽量小，原生 JS 实测 Lighthouse Performance 97。
+
 **系统架构**
 
 ```mermaid
