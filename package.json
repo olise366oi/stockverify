@@ -1,6 +1,6 @@
 {
   "name": "stockverify",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "StockVerify - 面向多国零售商铺的扫码核销与税务对账系统（PWA）",
   "main": "server.js",
   "scripts": {

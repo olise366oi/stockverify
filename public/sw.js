@@ -4,7 +4,7 @@
  * 数据同步由 IndexedDB + SyncManager 处理
  */
 
-const CACHE_NAME = 'stockverify-v51';
+const CACHE_NAME = 'stockverify-v52';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -53,53 +53,67 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 拦截请求：缓存优先策略（静态资源），网络优先（API请求）
+// 拦截请求
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 只处理同源请求
   if (url.origin !== self.location.origin) return;
+  if (request.method !== 'GET') return;
 
-  // API 请求：网络优先，失败时不缓存（数据必须实时）
+  // API：网络优先，离线返回 503，前端走 IndexedDB
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() => {
-        // 离线时 API 请求返回 503，前端会走 IndexedDB 逻辑
-        return new Response(JSON.stringify({ error: '离线模式，API不可用' }), {
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ error: '离线模式，API不可用' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
-        });
+        })
+      )
+    );
+    return;
+  }
+
+  // 导航请求：缓存优先 → 网络 → offline.html 回退
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) {
+          fetch(request).then((res) => {
+            if (res.ok) {
+              const clone = res.clone();
+              caches.open(CACHE_NAME).then((c) => c.put(request, clone));
+            }
+          }).catch(() => {});
+          return cached;
+        }
+        return fetch(request)
+          .then((res) => {
+            if (res.ok) {
+              const clone = res.clone();
+              caches.open(CACHE_NAME).then((c) => c.put(request, clone));
+            }
+            return res;
+          })
+          .catch(() => caches.match('/offline.html'));
       })
     );
     return;
   }
 
-  // 静态资源：网络优先（保证最新版本），离线时回退缓存
+  // 其他静态资源：缓存优先 + 后台更新（stale-while-revalidate）
   event.respondWith(
-    fetch(request).then((response) => {
-      // 缓存新的静态资源
-      if (response.ok && (request.method === 'GET')) {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
-      }
-      return response;
-    }).catch(() => {
-      return caches.match(request).then((cached) => {
-        if (cached) return cached;
-        // 离线且无缓存时，仅对根路径回退 index.html；具体页面不回退避免混淆
-        if (request.mode === 'navigate') {
-          const path = new URL(request.url).pathname;
-          if (path === '/' || path === '/index.html') {
-            return caches.match('/index.html');
+    caches.match(request).then((cached) => {
+      const network = fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           }
-          // admin.html / register.html 等返回缓存；无缓存时回退离线提示页 offline.html
-          const cachedPage = caches.match(path);
-          if (cachedPage) return cachedPage;
-          return caches.match('/offline.html');
-        }
-        return new Response('离线模式', { status: 503 });
-      });
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
     })
   );
 });
