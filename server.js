@@ -53,10 +53,7 @@ app.use('/api/', (req, res, next) => {
   res.setHeader('Expires', '0');
   next();
 });
-app.use(express.static(path.join(__dirname, 'public')));
-// 上传的凭证图片（静态可访问）
-app.use('/uploads', express.static(UPLOADS_DIR));
-// HTTPS 强制（生产环境）
+// HTTPS 强制 + 安全头（必须在 express.static 之前，否则静态资源拿不到安全头）
 app.use((req, res, next) => {
   if (req.headers['x-forwarded-proto'] === 'http') {
     return res.redirect(301, 'https://' + req.headers.host + req.url);
@@ -66,6 +63,18 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   next();
 });
+// 静态资源：HTML 和 sw.js 不缓存；带版本号的资源长缓存
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('sw.js') || filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else if (/\.(js|css|png|jpg|jpeg|svg|webp|woff2?|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
+// 上传的凭证图片（静态可访问）
+app.use('/uploads', express.static(UPLOADS_DIR));
 // ========== 认证中间件 ==========
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
