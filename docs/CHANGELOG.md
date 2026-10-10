@@ -7,6 +7,11 @@
 - **P0 跨租户越权修复**：`/api/v1/logs` 缺少 `WHERE shop_id = ?`，任意登录用户可读取全库所有店铺的审计日志；现已按 `req.user.shopId` 过滤
 - **P1 权限降级修复**：`/api/v1/logs` 和 `/api/v1/export/excel` 仅校验 token 未校验角色，staff 可访问；现限制为 `requireRole('merchant','brand','admin')`
 
+### 已知限制
+
+- `/api/v1/logs` 现按 `req.user.shopId` 严格隔离，**admin 账号也只能查看自己所属店铺的日志**。admin 跨店查看能力（对齐原 `/api/logs` 的 `resolveShopScope` 语义）推迟至 v0.4.0，需先引入 `superadmin` 角色与独立跨店接口
+- 初始数据里 `admin_01..05` 挂载在「系统管理端/运营管理端」等虚拟店铺上，本身是数据设计问题，与本次越权修复无关，另行处理
+
 ### SEO / 质量
 
 - `public/index.html` 补充 `meta description`

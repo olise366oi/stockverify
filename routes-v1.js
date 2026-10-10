@@ -303,6 +303,8 @@ router.post('/sync', v1Auth, async (req, res) => {
 });
 
 // GET /api/v1/logs — 操作日志（最近 200 条，含设备信息）
+// 注意：本接口按 req.user.shopId 严格隔离，admin 也只能看自己店铺的日志。
+// admin 若需跨店查看，应另行设计 superadmin 角色 + 独立接口，不走此路由。
 router.get('/logs', v1Auth, requireRole('merchant', 'brand', 'admin'), async (req, res) => {
   const db = getDb();
   try {
