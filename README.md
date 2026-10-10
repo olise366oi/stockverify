@@ -10,6 +10,8 @@
 
 一个可直接安装到手机桌面的渐进式 Web 应用（PWA）。
 
+> 个人独立项目：需求分析、架构设计、后端 API、PWA 前端、单元测试与部署均由一人完成。
+
 ## 核心亮点
 
 - 🌐 **多级授权链路** — 商品目录按 总代 → 代理 → 商家 分层授权（`authorized_by` + `level`）；撤销授权递归级联删除全部下游，授权树按角色服务端过滤返回
@@ -83,6 +85,8 @@ PWA 可安装性 — installable-manifest ✅ · maskable-icon ✅ · splash-scr
 | CORS | 默认仅同源，生产通过 CORS_ORIGINS 环境变量配置白名单 |
 | 审计 | 操作日志 SHA-256 哈希链，/api/logs/verify 可校验完整性 |
 | 上传 | 图片类型白名单 · 3MB 上限 · 随机文件名 · nosniff |
+
+> 注：登录限流为单实例内存实现（`security.js` 模块级 Map）；多实例水平扩展时需替换为共享存储（如 Redis）。
 
 ## 文档
 
