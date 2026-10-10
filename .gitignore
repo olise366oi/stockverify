@@ -41,3 +41,4 @@ tools/*
 *.bak
 lighthouse-*.json
 offline-test.mjs
+docs/resume/
