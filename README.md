@@ -12,6 +12,21 @@
 
 > 个人独立项目：需求分析、架构设计、后端 API、PWA 前端、单元测试与部署均由一人完成。
 
+## Overview (English)
+
+**StockVerify** is a Progressive Web App for multi-country retail distribution and inventory management, covering the full chain from master distributor → distributor → merchant. It provides tiered product catalog authorization, barcode scanning for stock-in/out, offline-first data sync, multi-tax/multi-currency reconciliation, and SHA-256 hash-chained audit logs.
+
+Key features:
+
+- 🌐 **Tiered authorization** — master distributor → distributor → merchant, with cascade revocation
+- 📷 **Barcode scanning** — stock-in/out via phone camera, no dedicated hardware needed
+- 📴 **Offline-first** — records queued in IndexedDB and synced on reconnect, iOS Safari compatible
+- 🌏 **Multi-country tax** — configurable country/currency/tax rate, inclusive & exclusive pricing
+- 🔐 **Multi-tenant isolation** — all queries scoped by shop, cross-shop access returns 403
+- 🔗 **Tamper-proof audit** — operation logs stored as SHA-256 hash chain
+
+**Stack**: Node.js + Express + SQLite (node-sqlite3-wasm) · Vanilla JS PWA · JWT + bcrypt · Lighthouse 97/97/100/100
+
 ## 核心亮点
 
 - 🌐 **多级授权链路** — 商品目录按 总代 → 代理 → 商家 分层授权（`authorized_by` + `level`）；撤销授权递归级联删除全部下游，授权树按角色服务端过滤返回
@@ -22,6 +37,18 @@
 - 🔐 **多租户隔离** — 所有查询按店铺强制过滤，跨店访问由服务端 403 拦截
 - 🧾 **一键对账** — 导出 Excel 报表，含平台/商家分成、佣金与佣金附加税
 - 🔗 **防篡改审计** — 操作日志以 SHA-256 哈希链存储，任何改动可校验
+
+## 项目规模
+
+个人独立完成，5 天从零到部署（18 次提交）：
+
+| 维度 | 数据 |
+|------|------|
+| 代码总量 | ≈9,200 行（后端 3,545 + 前端 5,513 + PWA sw.js 147，不含 vendor 与 tools/） |
+| API 路由 | 89 个（v1 15 + legacy 74） |
+| 数据库表 | 13 张 |
+| 单元测试 | 10 个用例（零依赖 `node:test`） |
+| 文档与截图 | 6 份文档 · 10 张功能截图 |
 
 ## 截图
 
