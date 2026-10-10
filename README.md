@@ -188,7 +188,6 @@ npm test        # node:test，零依赖
 ## 文档
 
 - [docs/architecture.md](docs/architecture.md) — 架构说明
-- [docs/offline-sync.png](docs/offline-sync.png) — 离线同步流程图
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) — 变更记录
 
 <details>
