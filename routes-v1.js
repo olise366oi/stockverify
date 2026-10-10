@@ -18,6 +18,8 @@ const finance = require('./finance');
 
 const router = express.Router();
 const { JWT_SECRET } = require('./config');
+const { makeRateLimit } = require('./security');
+const v1LoginLimit = makeRateLimit('v1-login');
 
 // ---------- API v1 认证中间件（token 由 /api/v1/login 签发） ----------
 function v1Auth(req, res, next) {
@@ -168,7 +170,7 @@ router.get('/hello', (req, res) => {
 });
 
 // POST /api/v1/login — 用户名 + 密码登录（bcrypt 校验），返回 token
-router.post('/login', async (req, res) => {
+router.post('/login', v1LoginLimit, async (req, res) => {
   const db = getDb();
   const { username, password, role } = req.body || {};
   if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {

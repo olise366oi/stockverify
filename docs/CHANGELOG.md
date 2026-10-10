@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v0.3.4 — 限流绕过修复与 CORS 收紧
+
+### 安全修复
+
+- **P1 限流绕过**：`/api/v1/login` 无 rateLimit，攻击者绕过原 `/api/auth/login` 的 5 分钟 20 次限制直接打 v1 接口；现抽出 `security.js` 共享限流模块，按接口维度隔离计数（`legacy` / `v1-login`），并定期清理过期记录防内存泄漏
+
+### 加固
+
+- **CORS 收紧**：原 `cors()` 允许所有来源；现默认仅同源 + 开发环境 localhost，生产通过 `CORS_ORIGINS` 环境变量配置白名单
+
+### 已知观察（未修复）
+
+- v1 token 与原 token 可互相调对方接口（两个中间件逻辑相同，`v1:true` 标记未校验）。**不构成越权**（两边都有 requireRole/requireAdmin 校验），仅影响未来收紧 v1 权限的扩展性
+
 ## v0.3.3 — JWT 密钥管理修复（P0）
 
 ### 安全修复

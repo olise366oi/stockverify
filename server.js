@@ -19,6 +19,7 @@ const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const { JWT_SECRET } = require('./config');
+const { makeRateLimit } = require('./security');
 // ========== 国家/地区 → GST 税率（开户时品牌方/管理端选定，客户端不可改） ==========
 const GST_BY_COUNTRY = {
   SG: 0.09, // 新加坡 Singapore 9%
@@ -29,21 +30,22 @@ const COUNTRY_LABELS = {
   MY: '马来西亚 Malaysia (无 GST)'
 };
 // 登录限流：同一 IP 5 分钟内最多 20 次登录尝试
-const loginAttempts = new Map();
-function rateLimit(req, res, next) {
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
-  const now = Date.now();
-  const rec = loginAttempts.get(ip) || { count: 0, resetAt: now + 5 * 60 * 1000 };
-  if (now > rec.resetAt) { rec.count = 0; rec.resetAt = now + 5 * 60 * 1000; }
-  rec.count += 1;
-  loginAttempts.set(ip, rec);
-  if (rec.count > 20) {
-    return res.status(429).json({ error: '登录尝试过于频繁，请 5 分钟后再试' });
-  }
-  next();
-}
+const rateLimit = makeRateLimit('legacy');
 // ========== 中间件 ==========
-app.use(cors());
+// CORS：默认仅允许同源；通过 CORS_ORIGINS 环境变量添加白名单（逗号分隔）
+// 开发环境自动允许 localhost 任意端口
+const corsOrigins = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true); // 同源请求无 Origin 头
+    if (corsOrigins.includes(origin)) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS 未授权来源: ' + origin));
+  },
+  credentials: true
+}));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 // API 响应禁止缓存，确保授权/下架等操作后列表实时刷新
