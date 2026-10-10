@@ -18,7 +18,7 @@ const routesV1 = require('./routes-v1');
 const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'sg-inventory-pwa-secret-key-2024-change-in-production';
+const { JWT_SECRET } = require('./config');
 // ========== 国家/地区 → GST 税率（开户时品牌方/管理端选定，客户端不可改） ==========
 const GST_BY_COUNTRY = {
   SG: 0.09, // 新加坡 Singapore 9%

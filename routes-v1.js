@@ -17,7 +17,7 @@ const { getDb, appendAuditLog } = require('./database');
 const finance = require('./finance');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'sg-inventory-pwa-secret-key-2024-change-in-production';
+const { JWT_SECRET } = require('./config');
 
 // ---------- API v1 认证中间件（token 由 /api/v1/login 签发） ----------
 function v1Auth(req, res, next) {

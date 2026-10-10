@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## v0.3.3 — JWT 密钥管理修复（P0）
+
+### 安全修复
+
+- **P0 硬编码密钥**：`server.js` 和 `routes-v1.js` 各自含硬编码 `JWT_SECRET` fallback（`sg-inventory-pwa-secret-key-2024-change-in-production`），Public 仓库可被任意人读取。若部署环境未设置 `JWT_SECRET` 环境变量，攻击者可伪造 `role:'admin'` 的 token，绕过本次会话修复的全部权限防线
+- 修复方式：抽出 `config.js` 统一密钥来源；`NODE_ENV=production` 且未设密钥时拒绝启动；开发环境使用启动时随机生成的临时密钥
+- 引入 `dotenv` 依赖，支持从 `.env` 加载环境变量（此前 `.env.example` 形同摆设）
+
+### 影响
+
+- 所有已登录用户的 token 在部署新版本后失效，需重新登录
+- 生产部署必须显式设置 `JWT_SECRET`（>= 32 字符），否则服务拒绝启动
+
 ## v0.3.2 — 权限修复与 SEO 优化
 
 ### 安全修复

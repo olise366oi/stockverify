@@ -170,13 +170,20 @@ PWA 可安装性：installable-manifest ✅ / maskable-icon ✅ / splash-screen 
 
 ## 环境变量
 
-| 变量 | 说明 | 默认值 |
-|---|---|---|
-| `PORT` | 服务监听端口 | `3000` |
-| `JWT_SECRET` | JWT 签名密钥（生产环境必须设置） | 内置默认值（仅限本地开发） |
-| `DATABASE_PATH` | SQLite 数据库文件路径 | `data/inventory.db` |
+```
+PORT=3000                    # 服务端口（默认 3000）
+JWT_SECRET=<32+字符随机串>    # 【生产必填】JWT 签名密钥，缺失则拒绝启动
+NODE_ENV=production          # 生产环境标识，启用 JWT_SECRET 强制校验
+DATABASE_PATH=data/inventory.db  # SQLite 路径（可选）
+```
 
-复制 `.env.example` 并填入真实值后使用；`.env` 已被 .gitignore 排除，不会提交到仓库。
+生成 JWT_SECRET：
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+项目使用 `dotenv` 加载 `.env`；`.env` 已在 `.gitignore` 中排除。生产部署若未设置 `JWT_SECRET`，服务将拒绝启动（`NODE_ENV=production` 时）。
 
 ## 目录结构
 
