@@ -4,7 +4,7 @@
 
 ![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js) ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8) ![Lighthouse](https://img.shields.io/badge/Lighthouse-97%2F97%2F100%2F100-22c55e) ![version](https://img.shields.io/badge/version-v0.3.4-blue)
 
-![登录页](docs/screenshots/01-login.png)
+![登录页](docs/screenshots/01-login.jpg)
 
 覆盖总代 → 代理 → 商家多级分销链路：商品库分层授权、发货与进货、扫码核销、库存管理、分成对账、审计留痕，完整闭环。断网时记录自动入本地队列、联网补传；多国税制与货币由管理端配置；操作日志以 SHA-256 哈希链防篡改。
 
@@ -23,13 +23,17 @@
 
 ## 截图
 
-| 登录 | 首页 | 扫码入库 |
-|:----:|:----:|:--------:|
-| ![](docs/screenshots/01-login.png) | ![](docs/screenshots/02-home.png) | ![](docs/screenshots/03-scan-in.png) |
-| **扫码出库** | **库存管理** | **离线模式** |
-| ![](docs/screenshots/04-scan-out.png) | ![](docs/screenshots/05-inventory.png) | ![](docs/screenshots/06-offline.png) |
-| **对账报表** | **操作日志** | **管理端商品** |
-| ![](docs/screenshots/07-report.png) | ![](docs/screenshots/08-logs.png) | ![](docs/screenshots/10-admin-products.png) |
+| 登录 | 首页 |
+|:----:|:----:|
+| ![](docs/screenshots/01-login.jpg) | ![](docs/screenshots/02-home.png) |
+| **扫码入库** | **扫码出库** |
+| ![](docs/screenshots/03-scan-in.png) | ![](docs/screenshots/04-scan-out.png) |
+| **库存管理** | **离线模式** |
+| ![](docs/screenshots/05-inventory.png) | ![](docs/screenshots/06-offline.png) |
+| **对账报表** | **操作日志** |
+| ![](docs/screenshots/07-report.png) | ![](docs/screenshots/08-logs.png) |
+| **管理端商品** | **管理端设置** |
+| ![](docs/screenshots/10-admin-products.png) | ![](docs/screenshots/09-admin-settings.png) |
 
 ## 技术栈
 
