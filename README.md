@@ -74,6 +74,45 @@ Key features:
 
 **权限模型** — JWT + RBAC（staff / merchant / brand / admin）· 商品目录多级授权链路 · 服务端 403 拦截
 
+**系统架构**
+
+```mermaid
+flowchart TD
+    subgraph Client["客户端"]
+        PWA["PWA 前端<br/>app.js / admin.js<br/>扫码 · IndexedDB 离线队列"]
+        SW["Service Worker<br/>APP_SHELL 缓存 · offline.html 回退"]
+    end
+
+    subgraph Access["接入层"]
+        Sec["security.js<br/>CORS 白名单 · HTTPS · 限流"]
+    end
+
+    subgraph API["API 层"]
+        V1["/api/v1/*<br/>JWT + RBAC + shopId 隔离"]
+        Legacy["/api/*<br/>74 legacy 路由"]
+    end
+
+    subgraph Logic["业务逻辑"]
+        Fin["finance.js<br/>含税 / 不含税 · 分成 · 佣金"]
+    end
+
+    subgraph Data["数据层"]
+        DB["SQLite 13 表<br/>哈希链审计 + 校验"]
+    end
+
+    PWA --> SW
+    PWA --> Sec
+    SW -.离线补传.-> V1
+    Sec --> V1
+    Sec --> Legacy
+    V1 --> Fin
+    Legacy --> Fin
+    V1 --> DB
+    Legacy --> DB
+    Fin --> DB
+```
+
+
 ## 快速开始
 
 ```bash
