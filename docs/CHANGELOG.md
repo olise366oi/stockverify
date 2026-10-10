@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v0.3.1 — PWA 稳定性与审查修复
+
+### 修复
+
+- Service Worker：修复离线导航回退 bug（`caches.match` 返回 Promise 恒真，导致 `/admin.html`、`/register.html` 离线时白屏）；改为缓存优先 + 后台更新策略
+- server.js：安全头中间件移到 `express.static` 之前，静态资源现在能拿到 HSTS / X-Content-Type-Options / X-Frame-Options
+
+### 优化
+
+- manifest.json：图标拆分 any / maskable，新增 `scope` 和 `id` 字段，`start_url` 加 `?source=pwa`
+- index.html：移除 3 个无效缓存 meta（Cache-Control / Pragma / Expires），viewport 去掉 `user-scalable=no`（无障碍），新增 `viewport-fit=cover`（刘海屏适配）
+- server.js：静态资源分级缓存——HTML 和 sw.js `no-cache`，带版本号的 js/css/图片 `immutable` 长缓存
+- README：补充首屏截图与技术栈徽章
+- 版本号统一至 v0.3.0 起
+
 ## v0.2.0（2026-10-05）— 账号体系与参数管理端化、多国/多地区通用化
 
 ### 新增
