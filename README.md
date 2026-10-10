@@ -1,19 +1,21 @@
 # StockVerify
 
-**面向多国零售商铺的扫码核销与税务对账 PWA**
+**面向多国零售分销的库存 / 销售管理系统（PWA）**
 
 ![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js) ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8) ![Lighthouse](https://img.shields.io/badge/Lighthouse-97%2F97%2F100%2F100-22c55e) ![version](https://img.shields.io/badge/version-v0.3.4-blue)
 
 ![登录页](docs/screenshots/01-login.png)
 
-店员扫码完成入库/出库核销，断网时记录自动入本地队列、联网补传；多国税制与货币由管理端配置，每笔交易自动计算税额、平台/商家分成；操作日志以 SHA-256 哈希链防篡改，一键导出 Excel 对账报表。
+覆盖总代 → 代理 → 商家多级分销链路：商品库分层授权、发货与进货、扫码核销、库存管理、分成对账、审计留痕，完整闭环。断网时记录自动入本地队列、联网补传；多国税制与货币由管理端配置；操作日志以 SHA-256 哈希链防篡改。
 
 一个可直接安装到手机桌面的渐进式 Web 应用（PWA）。
 
 ## 核心亮点
 
-- 📷 **扫码即用** — 手机摄像头扫商品条码完成入库/出库，无需专用扫码枪
-- 📴 **离线不丢** — 断网时记录存 IndexedDB，联网后自动补传，一条不丢（兼容 iOS Safari）
+- 🌐 **多级授权链路** — 商品目录按 总代 → 代理 → 商家 分层授权（`authorized_by` + `level`）；撤销授权递归级联删除全部下游，授权树按角色服务端过滤返回
+- 📦 **商品库与分销管理** — 总代上新 → 逐级授权 → 商家经营；发货单、进货单、商品条目全链路追踪
+- 📷 **扫码核销** — 手机摄像头扫商品条码完成入库/出库，无需专用扫码枪
+- 📴 **离线不丢** — 断网时记录存 IndexedDB，联网后自动补传，一条不丢（兼容 iOS Safari，不依赖 Background Sync）
 - 🌏 **多国税制** — 国家 / 货币 / 税种 / 税率全部可配置，支持含税与不含税双口径
 - 🔐 **多租户隔离** — 所有查询按店铺强制过滤，跨店访问由服务端 403 拦截
 - 🧾 **一键对账** — 导出 Excel 报表，含平台/商家分成、佣金与佣金附加税
@@ -24,8 +26,10 @@
 | 登录 | 首页 | 扫码入库 |
 |:----:|:----:|:--------:|
 | ![](docs/screenshots/01-login.png) | ![](docs/screenshots/02-home.png) | ![](docs/screenshots/03-scan-in.png) |
-| **离线模式** | **对账报表** | **管理端** |
-| ![](docs/screenshots/06-offline.png) | ![](docs/screenshots/07-report.png) | ![](docs/screenshots/09-admin-settings.png) |
+| **扫码出库** | **库存管理** | **离线模式** |
+| ![](docs/screenshots/04-scan-out.png) | ![](docs/screenshots/05-inventory.png) | ![](docs/screenshots/06-offline.png) |
+| **对账报表** | **操作日志** | **管理端商品** |
+| ![](docs/screenshots/07-report.png) | ![](docs/screenshots/08-logs.png) | ![](docs/screenshots/10-admin-products.png) |
 
 ## 技术栈
 
@@ -34,6 +38,8 @@
 **前端** — 原生 HTML / CSS / JavaScript（无框架）· html5-qrcode · SheetJS · IndexedDB
 
 **PWA** — Web App Manifest · Service Worker · 离线回退 · 可安装到桌面
+
+**权限模型** — JWT + RBAC（staff / merchant / brand / admin）· 商品目录多级授权链路 · 服务端 403 拦截
 
 ## 快速开始
 
@@ -67,6 +73,7 @@ PWA 可安装性 — installable-manifest ✅ · maskable-icon ✅ · splash-scr
 | 密钥管理 | JWT_SECRET 生产环境强制校验，缺失则拒绝启动；不硬编码 |
 | 多租户 | 所有查询带 WHERE shop_id = ?；越权访问由服务端 403 拦截 |
 | 角色权限 | requireRole / requireAdmin 服务端强校验；staff 无法访问商家/管理接口 |
+| 商品授权链路 | 总代 → 代理 → 商家分层授权，撤销递归级联删除下游；授权树按角色服务端过滤返回 |
 | 传输 | 强制 HTTPS（301）· HSTS · X-Content-Type-Options · X-Frame-Options |
 | CORS | 默认仅同源，生产通过 CORS_ORIGINS 环境变量配置白名单 |
 | 审计 | 操作日志 SHA-256 哈希链，/api/logs/verify 可校验完整性 |
