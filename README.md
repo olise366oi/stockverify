@@ -1,5 +1,9 @@
 # StockVerify · 多国零售核销与税务对账系统
 
+![登录页](docs/screenshots/01-login.png)
+
+![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js) ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8) ![License](https://img.shields.io/badge/License-Private-lightgrey)
+
 > 当前版本 v0.3.0，功能持续迭代中，部分模块（发货管理、推送通知）仍在规划。
 >
 > 面向多国零售商铺的扫码核销与税务对账系统（PWA）
