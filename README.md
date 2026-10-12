@@ -8,7 +8,7 @@
 
 ![Login page](docs/screenshots/01-login.jpg)
 
-Covers the full chain from master distributor → distributor → merchant: tiered product catalog authorization, shipping & stock-in, barcode-based stock verification, inventory management, profit-sharing reconciliation, and tamper-proof audit logs. Offline records are queued locally and synced on reconnect. Multi-country tax schemes and currencies are configured by admins. Operation logs are protected by a SHA-256 hash chain.
+Covers a five-level authorization chain (super admin → admin → master distributor → distributor → merchant): tiered product catalog authorization, shipping & stock-in, barcode-based stock verification, inventory management, profit-sharing reconciliation, and tamper-proof audit logs. Offline records are queued locally and synced on reconnect. Multi-country tax schemes and currencies are configured by admins. Operation logs are protected by a SHA-256 hash chain.
 
 Installable to mobile home screen as a PWA.
 
@@ -16,8 +16,8 @@ Installable to mobile home screen as a PWA.
 
 ## Highlights
 
-- 🌐 **Tiered authorization chain** — Product catalogs are authorized hierarchically (master distributor → distributor → merchant) via `authorized_by` + `level`. Revocation uses **recursive cascade delete** rather than soft delete: once upstream loses authorization, downstream products have no valid basis, and retaining them would enable cross-level privilege escalation. The authorization tree is filtered server-side by role.
-- 📦 **Product catalog & distribution** — Master distributor uploads → tiered authorization → merchant operations; full tracking of shipping orders, stock-in orders, and product entries.
+- 🌐 **Five-level authorization chain** — Product catalogs are created by super admin and authorized hierarchically (super admin → admin → master distributor → distributor → merchant) via `authorized_by` + `level`. Revocation uses **recursive cascade delete** rather than soft delete: once upstream loses authorization, downstream products have no valid basis, and retaining them would enable cross-level privilege escalation. The authorization tree is filtered server-side by role.
+- 📦 **Product catalog & distribution** — Super admin creates catalog templates → tiered authorization → merchant operations; full tracking of shipping orders, stock-in orders, and product entries.
 - 📷 **Barcode verification** — Stock-in/out via phone camera scanning product barcodes; no dedicated scanner required.
 - 📴 **Offline-first** — Disconnected records are written to IndexedDB and auto-synced on reconnect. The challenge: network flapping can deliver the same request twice. Solution: each offline record carries a `clientRecordId`; the server de-duplicates by this ID, making sync naturally idempotent (iOS Safari compatible, no Background Sync dependency).
 - 🌏 **Multi-country tax** — Country / currency / tax type / tax rate fully configurable; supports both tax-inclusive and tax-exclusive pricing models.
@@ -151,7 +151,7 @@ Planned: `calculate` (tax-inclusive/exclusive dual mode + profit split + commiss
 | Secret management | `JWT_SECRET` is mandatory in production — server refuses to start if missing; never hardcoded |
 | Multi-tenant | All queries carry `WHERE shop_id = ?`; unauthorized access returns 403 from the server |
 | Role permissions | `requireRole` / `requireAdmin` enforced server-side; staff cannot access merchant/admin endpoints |
-| Product authorization chain | Master distributor → distributor → merchant tiered authorization; revocation recursively cascade-deletes downstream; authorization tree filtered server-side by role |
+| Product authorization chain | Five-level authorization (super admin → admin → master distributor → distributor → merchant); revocation recursively cascade-deletes downstream; authorization tree filtered server-side by role |
 | Transport | Force HTTPS (301) · HSTS · X-Content-Type-Options · X-Frame-Options |
 | CORS | Same-origin by default; production whitelist configured via `CORS_ORIGINS` env var |
 | Audit | Operation logs stored as SHA-256 hash chain; `/api/logs/verify` validates integrity |
