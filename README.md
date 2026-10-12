@@ -21,7 +21,7 @@ Installable to mobile home screen as a PWA.
 - 📷 **Barcode verification** — Stock-in/out via phone camera scanning product barcodes; no dedicated scanner required.
 - 📴 **Offline-first** — Disconnected records are written to IndexedDB and auto-synced on reconnect. The challenge: network flapping can deliver the same request twice. Solution: each offline record carries a `clientRecordId`; the server de-duplicates by this ID, making sync naturally idempotent (iOS Safari compatible, no Background Sync dependency).
 - 🌏 **Multi-country tax** — Country / currency / tax type / tax rate fully configurable; supports both tax-inclusive and tax-exclusive pricing models.
-- 🔐 **Multi-tenant isolation** — All queries force-filtered by shop; cross-shop access returns 403 from the server.
+- 🔐 **Role-scoped data isolation** — All queries force-filtered by `shop_id`, and the visible scope differs by role: admin sees all shops, master distributor sees only its own sub-shops, distributor sees all merchants under the same brand, merchant/staff sees only its own shop. Cross-scope access returns 403 server-side.
 - 🧾 **One-click reconciliation** — Export Excel reports including platform/merchant profit split, commission, and commission surtax.
 - 🔗 **Tamper-proof audit** — Operation logs are stored as a SHA-256 hash chain (each record contains the previous hash). Any single-line change breaks the chain, immediately exposed by `/api/logs/verify` — stronger trust than an ordinary log table.
 
