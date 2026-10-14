@@ -2,7 +2,7 @@
 
 # StockVerify
 
-**面向多国零售分销的库存 / 销售管理系统（PWA）**
+**面向零售分销的库存 / 销售管理系统（PWA）—— 定位单店与小型连锁，支持多地区税制配置**
 
 ![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js) ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8) ![Lighthouse](https://img.shields.io/badge/Lighthouse-97%2F97%2F100%2F100-22c55e) ![version](https://img.shields.io/badge/version-v0.3.4-blue)
 
@@ -27,7 +27,7 @@
 
 ## 项目规模
 
-个人独立完成：约 1 周开发（2026-09）+ 5 天开源整理与打磨（2026-10-05 至 10-10，20+ 次提交）：
+个人独立完成（AI 辅助）：约 1 周初步开发（2026-09）+ 5 天文档、测试与安全加固（2026-10-05 至 10-10，20+ 次提交）：
 
 | 维度 | 数据 |
 |------|------|
@@ -61,7 +61,7 @@
 
 **权限模型** — JWT + RBAC（staff / merchant / brand / admin）· 商品目录多级授权链路 · 服务端 403 拦截
 
-**选型说明** — 后端选 SQLite 而非 PostgreSQL，因为目标场景是单店 / 小连锁，单文件 + 零运维优先；前端不用框架，因为 PWA 启动开销要尽量小，原生 JS 实测 Lighthouse Performance 97。
+**选型说明** — 后端选 SQLite 而非 PostgreSQL，因为目标场景是单店 / 小连锁，单文件 + 零运维优先；明确边界：不适合全球化多租户 SaaS 或高并发写入场景。前端不用框架，因为 PWA 启动开销要尽量小，原生 JS 实测 Lighthouse Performance 97。
 
 **系统架构**
 

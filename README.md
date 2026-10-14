@@ -2,7 +2,7 @@
 
 # StockVerify
 
-**A Progressive Web App for multi-country retail distribution & inventory management**
+**A Progressive Web App for retail inventory & distribution management — designed for single-store and small-chain operations, with configurable multi-region tax support**
 
 ![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js) ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8) ![Lighthouse](https://img.shields.io/badge/Lighthouse-97%2F97%2F100%2F100-22c55e) ![version](https://img.shields.io/badge/version-v0.3.4-blue)
 
@@ -27,7 +27,7 @@ Installable to mobile home screen as a PWA.
 
 ## Project Scale
 
-Solo project: ~1 week of development (2026-09) + 5 days of open-sourcing and refinement (2026-10-05 to 10-10, 20+ commits):
+Solo project, AI-assisted: ~1 week of initial development (2026-09) + 5 days of documentation, testing and security hardening (2026-10-05 to 10-10, 20+ commits):
 
 | Dimension | Value |
 |-----------|-------|
@@ -61,7 +61,7 @@ Solo project: ~1 week of development (2026-09) + 5 days of open-sourcing and ref
 
 **Permission model** — JWT + RBAC (staff / merchant / brand / admin) · tiered catalog authorization chain · server-side 403
 
-**Why these choices** — SQLite over PostgreSQL because the target scenario is single-store / small chains: single file + zero-ops wins; no frontend framework because PWA startup overhead must stay minimal — vanilla JS measured Lighthouse Performance 97.
+**Why these choices** — SQLite over PostgreSQL because the target scenario is single-store / small chains: single file + zero-ops wins. Trade-off acknowledged: not designed for global-scale multi-tenant SaaS or high write concurrency. No frontend framework because PWA startup overhead must stay minimal — vanilla JS measured Lighthouse Performance 97.
 
 **System Architecture**
 
